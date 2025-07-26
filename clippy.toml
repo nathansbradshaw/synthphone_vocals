@@ -1,0 +1,42 @@
+# Clippy configuration for synthphone_vocals
+# Only using valid configuration options
+
+# Cognitive complexity threshold
+cognitive-complexity-threshold = 30
+
+# Type complexity threshold
+type-complexity-threshold = 250
+
+# Too many arguments threshold
+too-many-arguments-threshold = 7
+
+# Too many lines threshold
+too-many-lines-threshold = 100
+
+# Large types threshold (in bytes)
+trivial-copy-size-limit = 128
+
+# Enum variant size threshold
+enum-variant-size-threshold = 200
+
+# Vec box size threshold
+vec-box-size-threshold = 4096
+
+# Max suggested slice pattern length
+max-suggested-slice-pattern-length = 3
+
+# Allow certain lints for no_std embedded development
+allow-expect-in-tests = true
+allow-unwrap-in-tests = true
+
+# Allowed script names for non-ASCII identifiers (empty = ASCII only)
+allowed-scripts = []
+
+# Disallowed names
+disallowed-names = ["foo", "baz", "quux"]
+
+# Arithmetic side effects allowed patterns
+arithmetic-side-effects-allowed = []
+
+# Single char binding names threshold
+single-char-binding-names-threshold = 4

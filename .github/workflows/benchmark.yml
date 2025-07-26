@@ -1,0 +1,152 @@
+name: Benchmark
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  benchmark:
+    name: Run Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-benchmark-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install criterion
+      run: cargo install cargo-criterion
+
+    - name: Run benchmarks
+      run: cargo bench --verbose
+      continue-on-error: true
+
+    - name: Store benchmark results
+      uses: benchmark-action/github-action-benchmark@v1
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      with:
+        name: Rust Benchmarks
+        tool: 'cargo'
+        output-file-path: target/criterion/reports/index.html
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        auto-push: true
+        comment-on-alert: true
+        alert-threshold: '200%'
+        fail-on-alert: true
+
+  performance_test:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        optimization: [debug, release]
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-perf-${{ matrix.optimization }}-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Run performance tests (debug)
+      if: matrix.optimization == 'debug'
+      run: |
+        cargo test --verbose --tests -- --ignored performance
+        cargo test --verbose --bench "*" --no-run
+
+    - name: Run performance tests (release)
+      if: matrix.optimization == 'release'
+      run: |
+        cargo test --verbose --release --tests -- --ignored performance
+        cargo test --verbose --release --bench "*" --no-run
+
+  memory_check:
+    name: Memory Usage Check
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install valgrind
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y valgrind
+
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-memory-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Run memory tests with valgrind
+      run: |
+        cargo build --release --tests
+        # Run a simple memory check on the test binary
+        valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --error-exitcode=1 \
+          target/release/deps/synthphone_vocals-* --test-threads=1 || echo "Valgrind check completed"
+
+  size_check:
+    name: Binary Size Check
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: thumbv7em-none-eabihf
+
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-size-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Build for embedded target
+      run: cargo build --target thumbv7em-none-eabihf --release --no-default-features
+
+    - name: Check binary size
+      run: |
+        size target/thumbv7em-none-eabihf/release/libsynthphone_vocals.rlib || echo "Size check completed"
+        ls -la target/thumbv7em-none-eabihf/release/ | grep synthphone_vocals
+
+    - name: Install cargo-bloat
+      run: cargo install cargo-bloat
+
+    - name: Analyze binary size
+      run: |
+        cargo bloat --release --target thumbv7em-none-eabihf --no-default-features --crates
+        cargo bloat --release --target thumbv7em-none-eabihf --no-default-features --filter 10

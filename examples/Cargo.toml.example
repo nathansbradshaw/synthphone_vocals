@@ -1,0 +1,50 @@
+[package]
+name = "daisy-autotune-example"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# Daisy Seed support
+libdaisy = "0.9"
+
+# RTIC framework for real-time processing
+rtic = { version = "2.0", features = ["thumbv7-backend"] }
+
+# The autotune library - truly no_std!
+synthphone_vocals = { version = "0.1.0", default-features = false, features = ["embedded"] }
+
+# ARM Cortex-M utilities
+cortex-m = { version = "0.7", features = ["critical-section-single-core"] }
+
+# Logging support
+log = "0.4"
+
+# Optional: panic handler (choose one)
+panic-halt = "0.2"
+# panic-semihosting = "0.6"  # For debugging only
+
+[profile.dev]
+opt-level = 1
+debug = true
+lto = false
+
+[profile.release]
+debug = false
+lto = true
+codegen-units = 1
+opt-level = "s"  # Optimize for size
+
+# Memory configuration (adjust for your specific STM32H7 variant)
+[profile.release.package.synthphone_vocals]
+opt-level = 3  # Maximum optimization for the autotune library
+
+[[bin]]
+name = "daisy-autotune"
+test = false
+bench = false
+
+# Example features you can enable:
+# [features]
+# default = []
+# formant-shifting = ["synthphone_vocals/formant-shifting"]
+# debug-logging = ["synthphone_vocals/debug-logging"]
