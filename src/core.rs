@@ -4,36 +4,31 @@
 //! approach for real-time pitch correction.
 
 use alloc::vec;
-use libm::{atan2f, cosf, expf, floorf, logf, sinf, sqrtf};
+use libm::{atan2f, cosf, floorf, sinf, sqrtf};
 use microfft;
 
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
 
-use crate::config::AutotuneConfig;
 use crate::error::AutotuneError;
-use crate::frequencies::{find_nearest_note_frequency, find_nearest_note_in_key};
+use crate::frequencies::find_nearest_note_in_key;
 use crate::hann_window::HANN_WINDOW;
 use crate::keys::{get_frequency, get_scale_by_key};
-use crate::process_frequencies::{collect_harmonics, find_fundamental_frequency, wrap_phase};
+use crate::process_frequencies::{find_fundamental_frequency, wrap_phase};
 use crate::state::{AutotuneState, MusicalSettings};
 
 const PI: f32 = 3.14159265358979323846264338327950288f32;
 
 /// Helper function to safely convert a slice to a fixed-size array
 fn slice_to_array_1024_f32(slice: &mut [f32]) -> Result<&mut [f32; 1024], AutotuneError> {
-    slice
-        .try_into()
-        .map_err(|_| AutotuneError::BufferSizeMismatch)
+    slice.try_into().map_err(|_| AutotuneError::BufferSizeMismatch)
 }
 
 /// Helper function to safely convert a slice to a fixed-size complex array
 fn slice_to_array_1024_complex(
     slice: &mut [microfft::Complex32],
 ) -> Result<&mut [microfft::Complex32; 1024], AutotuneError> {
-    slice
-        .try_into()
-        .map_err(|_| AutotuneError::BufferSizeMismatch)
+    slice.try_into().map_err(|_| AutotuneError::BufferSizeMismatch)
 }
 
 /// Helper function for FFT processing with dynamic allocation
@@ -288,17 +283,11 @@ fn extract_formant_envelope(
         let magnitude = analysis_magnitudes[i].max(1e-6); // Avoid log(0)
         let log_magnitude = logf(magnitude);
 
-        log_spectrum[i] = microfft::Complex32 {
-            re: log_magnitude,
-            im: 0.0,
-        };
+        log_spectrum[i] = microfft::Complex32 { re: log_magnitude, im: 0.0 };
 
         // Mirror for negative frequencies (except DC and Nyquist)
         if i > 0 && i < spectrum_size {
-            log_spectrum[fft_size - i] = microfft::Complex32 {
-                re: log_magnitude,
-                im: 0.0,
-            };
+            log_spectrum[fft_size - i] = microfft::Complex32 { re: log_magnitude, im: 0.0 };
         }
     }
 

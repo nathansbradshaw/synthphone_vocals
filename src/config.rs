@@ -50,12 +50,7 @@ impl AutotuneConfig {
             return Err(crate::AutotuneError::InvalidConfiguration);
         }
 
-        Ok(Self {
-            fft_size,
-            hop_size,
-            sample_rate,
-            ..Default::default()
-        })
+        Ok(Self { fft_size, hop_size, sample_rate, ..Default::default() })
     }
 
     /// Get the bin width in Hz

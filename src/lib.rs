@@ -54,10 +54,6 @@ pub mod utils;
 #[cfg_attr(docsrs, doc(cfg(feature = "embedded")))]
 pub mod embedded;
 
-#[cfg(feature = "desktop")]
-#[cfg_attr(docsrs, doc(cfg(feature = "desktop")))]
-pub mod desktop;
-
 // Existing modules (kept for compatibility)
 pub mod fade;
 pub mod normal_phase_advance;

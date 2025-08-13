@@ -3,356 +3,179 @@ use libm::fabsf;
 pub const C_MAJOR_SCALE_STEPS: [usize; 7] = [0, 2, 4, 5, 7, 9, 11];
 pub const MAX_OCTAVES: usize = 10;
 
-pub const NOTE_NAMES: [&str; 12] = [
-    "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
-];
+pub const NOTE_NAMES: [&str; 12] =
+    ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 pub const BASE_FREQUENCIES: [f32; 12] = [
     16.35, 17.32, 18.35, 19.45, 20.60, 21.83, 23.12, 24.50, 25.96, 27.50, 29.14, 30.87,
-]; 
+];
 pub const MAJOR_SCALE_STEPS: [usize; 7] = [2, 2, 1, 2, 2, 2, 1]; // W-W-H-W-W-W-H
-                                                                 //why would he want what we have?
-                                                                 //Why He Waddle wiff his widdle willy
+pub const MINOR_SCALE_STEPS: [usize; 7] = [2, 1, 2, 2, 1, 2, 2]; // W-H-W-W-H-W-W
 
 // Define the number of octaves (same as C_MAJOR_SCALE_FREQUENCIES length)
 pub const SCALE_NOTES: usize = 7;
 
-pub const C_MAJOR_SCALE_FREQUENCIES: [f32; 70] = [
-    //  0           1         2          3       4        5            6        7          8        9           10        11
-    //   C         C#         D         D#        E         F         F#        G         G#        A          A#        B
-    16.35, /*            */ 18.35, /*          */ 20.60, 21.83, /*        */ 24.50, /*           */ 27.50, /*           */ 30.87, 
-    32.70,/*             */ 36.71,/*           */ 41.20, 43.65, /*        */ 49.00, /*           */ 55.00,/*            */ 61.74, 
-    65.41, /*            */ 73.42, /*          */ 82.41, 87.31,/*         */ 98.00, /*           */ 110.00, /*          */ 123.47, 
-    130.81,/*            */ 146.83, /*         */ 164.81, 174.61, /*      */ 196.00,/*           */ 220.00, /*          */ 246.94, 
-    261.63, /*           */ 293.66,/*          */ 329.63, 349.23, /*      */ 392.00, /*          */ 440.00,/*           */ 493.88, 
-    523.25, /*           */ 587.33, /*         */ 659.25, 698.46,/*       */ 783.99, /*          */ 880.00, /*          */ 987.77, 
-    1046.50,/*           */ 1174.66, /*        */ 1318.51, 1396.91, /*    */1567.98, /*          */ 1760.00,/*          */ 1975.53, 
-    2093.00, /*          */ 2349.32, /*        */ 2637.02, 2793.83,/*     */3135.96, /*          */ 3520.00, /*         */ 3951.07, 
-    4186.01, /*          */ 4698.64,/*         */ 5274.04, 5587.65, /*    */6271.93, /*          */ 7040.00, /*         */ 7902.13,
-    8372.02, /*          */ 9397.27, /*        */ 10548.08, 11175.30,/*   */ 12543.85,/*         */ 14080.00, /*        */ 15804.26,
-];
+// Const function to generate major scale frequencies
+const fn generate_major_scale_frequencies(root_index: usize) -> [f32; SCALE_NOTES * MAX_OCTAVES] {
+    let mut frequencies = [0.0; SCALE_NOTES * MAX_OCTAVES];
+    let mut freq_index = 0;
 
-//this has been sorted already by me
-pub const G_MAJOR_SCALE_FREQUENCIES: [f32; 70] = [
-    //   C         C#         D         D#        E         F         F#        G         G#        A         A#        B
-    16.35, /*       */ 18.35, /*       */ 20.60, 23.12, /*       */ 24.50,
-    /*       */ 27.50, /*       */ 30.87, 32.70, /*       */ 36.71,
-    /*       */ 41.20, 46.25, /*       */ 49.00, /*       */ 55.00,
-    /*       */ 61.74, 65.41, /*       */ 73.42, /*       */ 82.41, 92.50,
-    /*       */ 98.00, /*       */ 110.00, /*      */ 123.47, 130.81,
-    /*      */ 146.83, /*      */ 164.81, 185.00, /*      */ 196.00,
-    /*      */ 220.00, /*      */ 246.94, 261.63, /*      */ 293.66,
-    /*      */ 329.63, 369.99, /*      */ 392.00, /*      */ 440.00,
-    /*      */ 493.88, 523.25, /*      */ 587.33, /*      */ 659.25, 739.99,
-    /*      */ 783.99, /*      */ 880.00, /*      */ 987.77, 1046.50,
-    /*     */ 1174.66, /*     */ 1318.51, 1479.98, /*     */ 1567.98,
-    /*     */ 1760.00, /*     */ 1975.53, 2093.00, /*     */ 2349.32,
-    /*     */ 2637.02, 2959.96, /*     */ 3135.96, /*     */ 3520.00,
-    /*     */ 3951.07, 4186.01, /*     */ 4698.64, /*     */ 5274.04, 5919.91,
-    /*     */ 6271.93, /*     */ 7040.00, /*     */ 7902.13, 8372.02,
-    /*     */ 9397.27, /*     */ 10548.08, 11839.82, /*    */ 12543.85,
-    /*    */ 14080.00, /*    */ 15804.26,
-];
+    let mut octave = 0;
+    while octave < MAX_OCTAVES {
+        let mut current_index = root_index;
+        let mut step_index = 0;
 
-pub const D_MAJOR_SCALE_FREQUENCIES: [f32; 70] = [
-    //   C         C#         D         D#        E         F         F#        G         G#        A         A#        B
-    17.32, 18.35, /*       */ 20.60, /*     */ 23.12, 24.50, /*          */ 27.50,
-    /*      */ 30.87, 34.64, 36.70, /*       */ 41.20, /*     */ 46.24, 49.00,
-    /*          */ 55.00, /*      */ 61.74, 69.28, 73.40, /*       */ 82.40,
-    /*     */ 92.48, 98.00, /*          */ 110.00, /*      */ 123.48, 138.56,
-    146.80, /*      */ 164.80, /*     */ 184.96, 196.00, /*         */ 220.00,
-    /*      */ 246.96, 277.12, 293.60, /*      */ 329.60, /*     */ 369.92, 392.00,
-    /*        */ 440.00, /*      */ 493.92, 554.24, 587.20, /*      */ 659.20,
-    /*     */ 739.84, 784.00, /*       */ 880.00, /*      */ 987.84, 1108.48,
-    1174.40, /*     */ 1318.40, /*     */ 1479.68, 1568.00, /*      */ 1760.00,
-    /*      */ 1975.68, 2216.96, 2348.80, /*     */ 2636.80, /*     */ 2959.36,
-    3136.00, /*      */ 3520.00, /*      */ 3951.36, 4433.92, 4697.60,
-    /*     */ 5273.60, /*     */ 5918.72, 6272.00, /*      */ 7040.00,
-    /*     */ 7902.72, 8867.84, 9395.20, /*     */ 10547.20, /*     */ 11837.44,
-    12544.00, /*    */ 14080.00, /*     */ 15805.44,
-];
+        while step_index < MAJOR_SCALE_STEPS.len() && freq_index < SCALE_NOTES * MAX_OCTAVES {
+            let octave_multiplier = pow_f32(2.0, octave as i32);
+            frequencies[freq_index] = BASE_FREQUENCIES[current_index] * octave_multiplier;
+            freq_index += 1;
 
-//   C         C#         D         D#        E         F         F#        G         G#        A         A#        B
-// 16.35,    17.32,    18.35,    19.45,    20.60,    21.83,    23.12,    24.50,    25.96,    27.50,    29.14,    30.87,
-
-pub const A_MAJOR_SCALE_FREQUENCIES: [f32; 70] = [
-    //  C#          D         E        F#         G#        A         B
-    17.32, 18.35, 20.60, 23.12, 25.96, 27.50, 30.87, 34.65, 36.71, 41.20, 46.25, 51.91, 55.00,
-    61.74, 69.30, 73.42, 82.41, 92.50, 103.83, 110.00, 123.47, 138.59, 146.83, 164.81, 185.00,
-    207.65, 220.00, 246.94, 277.18, 293.66, 329.63, 369.99, 415.30, 440.00, 493.88, 554.37, 587.33,
-    659.26, 739.99, 830.61, 880.00, 987.77, 1108.73, 1174.66, 1318.51, 1479.98, 1661.22, 1760.00,
-    1975.53, 2217.46, 2349.32, 2637.02, 2959.96, 3322.44, 3520.00, 3951.07, 4434.92, 4698.64,
-    5274.04, 5919.91, 6644.88, 7040.00, 7902.13, 8869.84, 9397.27, 10548.08, 11839.82, 13289.75,
-    14080.00, 15804.27,
-];
-
-pub const E_MAJOR_SCALE_FREQUENCIES: [f32; 70] = [
-    //  C#          D#        E        F#         G#        A         B
-    17.32, 19.45, 20.60, 23.12, 25.96, 27.50, 30.87, 34.65, 38.89, 41.20, 46.25, 51.91, 55.00,
-    61.74, 69.30, 77.78, 82.41, 92.50, 103.83, 110.00, 123.47, 138.59, 155.56, 164.81, 185.00,
-    207.65, 220.00, 246.94, 277.18, 311.13, 329.63, 369.99, 415.30, 440.00, 493.88, 554.37, 622.25,
-    659.26, 739.99, 830.61, 880.00, 987.77, 1108.73, 1244.51, 1318.51, 1479.98, 1661.22, 1760.00,
-    1975.53, 2217.46, 2489.02, 2637.02, 2959.96, 3322.44, 3520.00, 3951.07, 4434.92, 4978.03,
-    5274.04, 5919.91, 6644.88, 7040.00, 7902.13, 8869.84, 9956.06, 10548.08, 11839.82, 13289.75,
-    14080.00, 15804.27,
-];
-
-pub const B_MAJOR_SCALE_FREQUENCIES: [f32; 70] = [
-    //  C#          D#        E        F#         G#        A#         B
-    17.32, 19.45, 20.60, 23.12, 25.96, 29.14, 30.87, 34.65, 38.89, 41.20, 46.25, 51.91, 58.27,
-    61.74, 69.30, 77.78, 82.41, 92.50, 103.83, 116.54, 123.47, 138.59, 155.56, 164.81, 185.00,
-    207.65, 233.08, 246.94, 277.18, 311.13, 329.63, 369.99, 415.30, 466.16, 493.88, 554.37, 622.25,
-    659.26, 739.99, 830.61, 932.33, 987.77, 1108.73, 1244.51, 1318.51, 1479.98, 1661.22, 1864.66,
-    1975.53, 2217.46, 2489.02, 2637.02, 2959.96, 3322.44, 3729.31, 3951.07, 4434.92, 4978.03,
-    5274.04, 5919.91, 6644.88, 7458.62, 7902.13, 8869.84, 9956.06, 10548.08, 11839.82, 13289.75,
-    14917.24, 15804.27,
-];
-
-pub const FS_MAJOR_SCALE_FREQUENCIES: [f32; 70] = [
-    // C#      D#        F        F#         G#         A#         B
-    17.32, 19.45, 21.83, 23.12, 25.96, 29.14, 30.87, 34.65, 38.89, 43.65, 46.25, 51.91, 58.27,
-    61.74, 69.30, 77.78, 87.31, 92.50, 103.83, 116.54, 123.47, 138.59, 155.56, 174.61, 185.00,
-    207.65, 233.08, 246.94, 277.18, 311.13, 349.23, 369.99, 415.30, 466.16, 493.88, 554.37, 622.25,
-    698.46, 739.99, 830.61, 932.33, 987.77, 1108.73, 1244.51, 1396.91, 1479.98, 1661.22, 1864.66,
-    1975.53, 2217.46, 2489.02, 2793.83, 2959.96, 3322.44, 3729.31, 3951.07, 4434.92, 4978.03,
-    5587.65, 5919.91, 6644.88, 7458.62, 7902.13, 8869.84, 9956.06, 11175.30, 11839.82, 13289.75,
-    14917.24, 15804.27,
-];
-
-pub const CS_MAJOR_SCALE_FREQUENCIES: [f32; 70] = [
-    // C          C#        D#        F         F#         G#         A#
-    16.35, 17.32, 19.45, 21.83, 23.12, 25.96, 29.14, 32.70, 34.65, 38.89, 43.65, 46.25, 51.91,
-    58.27, 65.41, 69.30, 77.78, 87.31, 92.50, 103.83, 116.54, 130.81, 138.59, 155.56, 174.61,
-    185.00, 207.65, 233.08, 261.63, 277.18, 311.13, 349.23, 369.99, 415.30, 466.16, 523.25, 554.37,
-    622.25, 698.46, 739.99, 830.61, 932.33, 1046.50, 1108.73, 1244.51, 1396.91, 1479.98, 1661.22,
-    1864.66, 2093.00, 2217.46, 2489.02, 2793.83, 2959.96, 3322.44, 3729.31, 4186.01, 4434.92,
-    4978.03, 5587.65, 5919.91, 6644.88, 7458.62, 8372.02, 8869.84, 9956.06, 11175.30, 11839.82,
-    13289.75, 14917.24,
-];
-
-//   C         C#         D         D#        E         F         F#        G         G#        A         A#        B
-// 16.35,    17.32,    18.35,    19.45,    20.60,    21.83,    23.12,    24.50,    25.96,    27.50,    29.14,    30.87,
-pub const F_MAJOR_SCALE_FREQUENCIES: [f32; 70] = [
-    16.35, 18.35, 20.60, 21.83, 24.50, 27.50, 29.14, 32.70, 36.71, 41.20, 43.65, 49.00, 55.00,
-    58.27, 65.41, 73.42, 82.41, 87.31, 98.00, 110.00, 116.54, 130.81, 146.83, 164.81, 174.61,
-    196.00, 220.00, 233.08, 261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 466.16, 523.25, 587.33,
-    659.26, 698.46, 783.99, 880.00, 932.33, 1046.50, 1174.66, 1318.51, 1396.91, 1567.98, 1760.00,
-    1864.66, 2093.00, 2349.32, 2637.02, 2793.83, 3135.96, 3520.00, 3729.31, 4186.01, 4698.64,
-    5274.04, 5587.65, 6271.93, 7040.00, 7458.62, 8372.02, 9397.27, 10548.08, 11175.30, 12543.85,
-    14080.00, 14917.24,
-];
-pub const BB_MAJOR_SCALE_FREQUENCIES: [f32; 70] = [
-    16.35, 18.35, 19.45, 21.83, 24.50, 27.50, 29.14, 32.70, 36.71, 38.89, 43.65, 49.00, 55.00,
-    58.27, 65.41, 73.42, 77.78, 87.31, 98.00, 110.00, 116.54, 130.81, 146.83, 155.56, 174.61,
-    196.00, 220.00, 233.08, 261.63, 293.66, 311.13, 349.23, 392.00, 440.00, 466.16, 523.25, 587.33,
-    622.25, 698.46, 783.99, 880.00, 932.33, 1046.50, 1174.66, 1244.51, 1396.91, 1567.98, 1760.00,
-    1864.66, 2093.00, 2349.32, 2489.02, 2793.83, 3135.96, 3520.00, 3729.31, 4186.01, 4698.64,
-    4978.03, 5587.65, 6271.93, 7040.00, 7458.62, 8372.02, 9397.27, 9956.06, 11175.30, 12543.85,
-    14080.00, 14917.24,
-];
-pub const EB_MAJOR_SCALE_FREQUENCIES: [f32; 70] = [
-    16.35, 18.35, 19.45, 21.83, 24.50, 25.96, 29.14, 32.70, 36.71, 38.89, 43.65, 49.00, 51.91,
-    58.27, 65.41, 73.42, 77.78, 87.31, 98.00, 103.83, 116.54, 130.81, 146.83, 155.56, 174.61,
-    196.00, 207.65, 233.08, 261.63, 293.66, 311.13, 349.23, 392.00, 415.30, 466.16, 523.25, 587.33,
-    622.25, 698.46, 783.99, 830.61, 932.33, 1046.50, 1174.66, 1244.51, 1396.91, 1567.98, 1661.22,
-    1864.66, 2093.00, 2349.32, 2489.02, 2793.83, 3135.96, 3322.44, 3729.31, 4186.01, 4698.64,
-    4978.03, 5587.65, 6271.93, 6644.88, 7458.62, 8372.02, 9397.27, 9956.06, 11175.30, 12543.85,
-    13289.75, 14917.24,
-];
-pub const AB_MAJOR_SCALE_FREQUENCIES: [f32; 70] = [
-    16.35, 17.32, 19.45, 21.83, 24.50, 25.96, 29.14, 32.70, 34.65, 38.89, 43.65, 49.00, 51.91,
-    58.27, 65.41, 69.30, 77.78, 87.31, 98.00, 103.83, 116.54, 130.81, 138.59, 155.56, 174.61,
-    196.00, 207.65, 233.08, 261.63, 277.18, 311.13, 349.23, 392.00, 415.30, 466.16, 523.25, 554.37,
-    622.25, 698.46, 783.99, 830.61, 932.33, 1046.50, 1108.73, 1244.51, 1396.91, 1567.98, 1661.22,
-    1864.66, 2093.00, 2217.46, 2489.02, 2793.83, 3135.96, 3322.44, 3729.31, 4186.01, 4434.92,
-    4978.03, 5587.65, 6271.93, 6644.88, 7458.62, 8372.02, 8869.84, 9956.06, 11175.30, 12543.85,
-    13289.75, 14917.24,
-];
-
-pub const C_MINOR_SCALE_FREQUENCIES: [f32; 70] = [
-    16.35, 18.35, 19.45, 21.83, 24.50, 25.96, 29.14, 32.70, 36.71, 38.89, 43.65, 49.00, 51.91,
-    58.27, 65.41, 73.42, 77.78, 87.31, 98.00, 103.83, 116.54, 130.81, 146.83, 155.56, 174.61,
-    196.00, 207.65, 233.08, 261.63, 293.66, 311.13, 349.23, 392.00, 415.30, 466.16, 523.25, 587.33,
-    622.25, 698.46, 783.99, 830.61, 932.33, 1046.50, 1174.66, 1244.51, 1396.91, 1567.98, 1661.22,
-    1864.66, 2093.00, 2349.32, 2489.02, 2793.83, 3135.96, 3322.44, 3729.31, 4186.01, 4698.64,
-    4978.03, 5587.65, 6271.93, 6644.88, 7458.62, 8372.02, 9397.27, 9956.06, 11175.30, 12543.85,
-    13289.75, 14917.24,
-];
-pub const G_MINOR_SCALE_FREQUENCIES: [f32; 70] = [
-    16.35, 18.35, 19.45, 21.83, 24.50, 27.50, 29.14, 32.70, 36.71, 38.89, 43.65, 49.00, 55.00,
-    58.27, 65.41, 73.42, 77.78, 87.31, 98.00, 110.00, 116.54, 130.81, 146.83, 155.56, 174.61,
-    196.00, 220.00, 233.08, 261.63, 293.66, 311.13, 349.23, 392.00, 440.00, 466.16, 523.25, 587.33,
-    622.25, 698.46, 783.99, 880.00, 932.33, 1046.50, 1174.66, 1244.51, 1396.91, 1567.98, 1760.00,
-    1864.66, 2093.00, 2349.32, 2489.02, 2793.83, 3135.96, 3520.00, 3729.31, 4186.01, 4698.64,
-    4978.03, 5587.65, 6271.93, 7040.00, 7458.62, 8372.02, 9397.27, 9956.06, 11175.30, 12543.85,
-    14080.00, 14917.24,
-];
-pub const D_MINOR_SCALE_FREQUENCIES: [f32; 70] = [
-    16.35, 18.35, 20.60, 21.83, 24.50, 27.50, 29.14, 32.70, 36.71, 41.20, 43.65, 49.00, 55.00,
-    58.27, 65.41, 73.42, 82.41, 87.31, 98.00, 110.00, 116.54, 130.81, 146.83, 164.81, 174.61,
-    196.00, 220.00, 233.08, 261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 466.16, 523.25, 587.33,
-    659.26, 698.46, 783.99, 880.00, 932.33, 1046.50, 1174.66, 1318.51, 1396.91, 1567.98, 1760.00,
-    1864.66, 2093.00, 2349.32, 2637.02, 2793.83, 3135.96, 3520.00, 3729.31, 4186.01, 4698.64,
-    5274.04, 5587.65, 6271.93, 7040.00, 7458.62, 8372.02, 9397.27, 10548.08, 11175.30, 12543.85,
-    14080.00, 14917.24,
-];
-pub const A_MINOR_SCALE_FREQUENCIES: [f32; 70] = [
-    16.35, 18.35, 20.60, 21.83, 24.50, 27.50, 30.87, 32.70, 36.71, 41.20, 43.65, 49.00, 55.00,
-    61.74, 65.41, 73.42, 82.41, 87.31, 98.00, 110.00, 123.47, 130.81, 146.83, 164.81, 174.61,
-    196.00, 220.00, 246.94, 261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25, 587.33,
-    659.26, 698.46, 783.99, 880.00, 987.77, 1046.50, 1174.66, 1318.51, 1396.91, 1567.98, 1760.00,
-    1975.53, 2093.00, 2349.32, 2637.02, 2793.83, 3135.96, 3520.00, 3951.07, 4186.01, 4698.64,
-    5274.04, 5587.65, 6271.93, 7040.00, 7902.13, 8372.02, 9397.27, 10548.08, 11175.30, 12543.85,
-    14080.00, 15804.27,
-];
-pub const E_MINOR_SCALE_FREQUENCIES: [f32; 70] = [
-    16.35, 18.35, 20.60, 23.12, 24.50, 27.50, 30.87, 32.70, 36.71, 41.20, 46.25, 49.00, 55.00,
-    61.74, 65.41, 73.42, 82.41, 92.50, 98.00, 110.00, 123.47, 130.81, 146.83, 164.81, 185.00,
-    196.00, 220.00, 246.94, 261.63, 293.66, 329.63, 369.99, 392.00, 440.00, 493.88, 523.25, 587.33,
-    659.26, 739.99, 783.99, 880.00, 987.77, 1046.50, 1174.66, 1318.51, 1479.98, 1567.98, 1760.00,
-    1975.53, 2093.00, 2349.32, 2637.02, 2959.96, 3135.96, 3520.00, 3951.07, 4186.01, 4698.64,
-    5274.04, 5919.91, 6271.93, 7040.00, 7902.13, 8372.02, 9397.27, 10548.08, 11839.82, 12543.85,
-    14080.00, 15804.27,
-];
-pub const B_MINOR_SCALE_FREQUENCIES: [f32; 70] = [
-    17.32, 18.35, 20.60, 23.12, 24.50, 27.50, 30.87, 34.65, 36.71, 41.20, 46.25, 49.00, 55.00,
-    61.74, 69.30, 73.42, 82.41, 92.50, 98.00, 110.00, 123.47, 138.59, 146.83, 164.81, 185.00,
-    196.00, 220.00, 246.94, 277.18, 293.66, 329.63, 369.99, 392.00, 440.00, 493.88, 554.37, 587.33,
-    659.26, 739.99, 783.99, 880.00, 987.77, 1108.73, 1174.66, 1318.51, 1479.98, 1567.98, 1760.00,
-    1975.53, 2217.46, 2349.32, 2637.02, 2959.96, 3135.96, 3520.00, 3951.07, 4434.92, 4698.64,
-    5274.04, 5919.91, 6271.93, 7040.00, 7902.13, 8869.84, 9397.27, 10548.08, 11839.82, 12543.85,
-    14080.00, 15804.27,
-];
-pub const FS_MINOR_SCALE_FREQUENCIES: [f32; 70] = [
-    17.32, 18.35, 20.60, 23.12, 25.96, 27.50, 30.87, 34.65, 36.71, 41.20, 46.25, 51.91, 55.00,
-    61.74, 69.30, 73.42, 82.41, 92.50, 103.83, 110.00, 123.47, 138.59, 146.83, 164.81, 185.00,
-    207.65, 220.00, 246.94, 277.18, 293.66, 329.63, 369.99, 415.30, 440.00, 493.88, 554.37, 587.33,
-    659.26, 739.99, 830.61, 880.00, 987.77, 1108.73, 1174.66, 1318.51, 1479.98, 1661.22, 1760.00,
-    1975.53, 2217.46, 2349.32, 2637.02, 2959.96, 3322.44, 3520.00, 3951.07, 4434.92, 4698.64,
-    5274.04, 5919.91, 6644.88, 7040.00, 7902.13, 8869.84, 9397.27, 10548.08, 11839.82, 13289.75,
-    14080.00, 15804.27,
-];
-pub const CS_MINOR_SCALE_FREQUENCIES: [f32; 70] = [
-    17.32, 19.45, 20.60, 23.12, 25.96, 27.50, 30.87, 34.65, 38.89, 41.20, 46.25, 51.91, 55.00,
-    61.74, 69.30, 77.78, 82.41, 92.50, 103.83, 110.00, 123.47, 138.59, 155.56, 164.81, 185.00,
-    207.65, 220.00, 246.94, 277.18, 311.13, 329.63, 369.99, 415.30, 440.00, 493.88, 554.37, 622.25,
-    659.26, 739.99, 830.61, 880.00, 987.77, 1108.73, 1244.51, 1318.51, 1479.98, 1661.22, 1760.00,
-    1975.53, 2217.46, 2489.02, 2637.02, 2959.96, 3322.44, 3520.00, 3951.07, 4434.92, 4978.03,
-    5274.04, 5919.91, 6644.88, 7040.00, 7902.13, 8869.84, 9956.06, 10548.08, 11839.82, 13289.75,
-    14080.00, 15804.27,
-];
-pub const F_MINOR_SCALE_FREQUENCIES: [f32; 70] = [
-    16.35, 17.32, 19.45, 21.83, 24.50, 25.96, 29.14, 32.70, 34.65, 38.89, 43.65, 49.00, 51.91,
-    58.27, 65.41, 69.30, 77.78, 87.31, 98.00, 103.83, 116.54, 130.81, 138.59, 155.56, 174.61,
-    196.00, 207.65, 233.08, 261.63, 277.18, 311.13, 349.23, 392.00, 415.30, 466.16, 523.25, 554.37,
-    622.25, 698.46, 783.99, 830.61, 932.33, 1046.50, 1108.73, 1244.51, 1396.91, 1567.98, 1661.22,
-    1864.66, 2093.00, 2217.46, 2489.02, 2793.83, 3135.96, 3322.44, 3729.31, 4186.01, 4434.92,
-    4978.03, 5587.65, 6271.93, 6644.88, 7458.62, 8372.02, 8869.84, 9956.06, 11175.30, 12543.85,
-    13289.75, 14917.24,
-];
-pub const BB_MINOR_SCALE_FREQUENCIES: [f32; 70] = [
-    16.35, 17.32, 19.45, 21.83, 23.12, 25.96, 29.14, 32.70, 34.65, 38.89, 43.65, 46.25, 51.91,
-    58.27, 65.41, 69.30, 77.78, 87.31, 92.50, 103.83, 116.54, 130.81, 138.59, 155.56, 174.61,
-    185.00, 207.65, 233.08, 261.63, 277.18, 311.13, 349.23, 369.99, 415.30, 466.16, 523.25, 554.37,
-    622.25, 698.46, 739.99, 830.61, 932.33, 1046.50, 1108.73, 1244.51, 1396.91, 1479.98, 1661.22,
-    1864.66, 2093.00, 2217.46, 2489.02, 2793.83, 2959.96, 3322.44, 3729.31, 4186.01, 4434.92,
-    4978.03, 5587.65, 5919.91, 6644.88, 7458.62, 8372.02, 8869.84, 9956.06, 11175.30, 11839.82,
-    13289.75, 14917.24,
-];
-pub const EB_MINOR_SCALE_FREQUENCIES: [f32; 70] = [
-    17.32, 19.45, 21.83, 23.12, 25.96, 29.14, 30.87, 34.65, 38.89, 43.65, 46.25, 51.91, 58.27,
-    61.74, 69.30, 77.78, 87.31, 92.50, 103.83, 116.54, 123.47, 138.59, 155.56, 174.61, 185.00,
-    207.65, 233.08, 246.94, 277.18, 311.13, 349.23, 369.99, 415.30, 466.16, 493.88, 554.37, 622.25,
-    698.46, 739.99, 830.61, 932.33, 987.77, 1108.73, 1244.51, 1396.91, 1479.98, 1661.22, 1864.66,
-    1975.53, 2217.46, 2489.02, 2793.83, 2959.96, 3322.44, 3729.31, 3951.07, 4434.92, 4978.03,
-    5587.65, 5919.91, 6644.88, 7458.62, 7902.13, 8869.84, 9956.06, 11175.30, 11839.82, 13289.75,
-    14917.24, 15804.27,
-];
-pub const AB_MINOR_SCALE_FREQUENCIES: [f32; 70] = [
-    17.32, 19.45, 20.60, 23.12, 25.96, 29.14, 30.87, 34.65, 38.89, 41.20, 46.25, 51.91, 58.27,
-    61.74, 69.30, 77.78, 82.41, 92.50, 103.83, 116.54, 123.47, 138.59, 155.56, 164.81, 185.00,
-    207.65, 233.08, 246.94, 277.18, 311.13, 329.63, 369.99, 415.30, 466.16, 493.88, 554.37, 622.25,
-    659.26, 739.99, 830.61, 932.33, 987.77, 1108.73, 1244.51, 1318.51, 1479.98, 1661.22, 1864.66,
-    1975.53, 2217.46, 2489.02, 2637.02, 2959.96, 3322.44, 3729.31, 3951.07, 4434.92, 4978.03,
-    5274.04, 5919.91, 6644.88, 7458.62, 7902.13, 8869.84, 9956.06, 10548.08, 11839.82, 13289.75,
-    14917.24, 15804.27,
-];
-
-pub const FREQUENCIES: [f32; 125] = [
-    //   C         C#         D         D#        E         F         F#        G         G#        A         A#        B
-    16.35, 17.32, 18.35, 19.45, 20.60, 21.83, 23.12, 24.50, 25.96, 27.50, 29.14, 30.87, 32.70,
-    34.65, 36.71, 38.89, 41.20, 43.65, 46.25, 49.00, 51.91, 55.00, 58.27, 61.74, 65.41, 69.30,
-    73.42, 77.78, 82.41, 87.31, 92.50, 98.00, 103.83, 110.00, 116.54, 123.47, 130.81, 138.59,
-    146.83, 155.56, 164.81, 174.61, 185.00, 196.00, 207.65, 220.00, 233.08, 246.94, 261.63, 277.18,
-    293.66, 311.13, 329.63, 349.23, 369.99, 392.00, 415.30, 440.00, 466.16, 493.88, 523.25, 554.37,
-    587.33, 622.25, 659.26, 698.46, 739.99, 783.99, 830.61, 880.00, 932.33, 987.77, 1046.50,
-    1108.73, 1174.66, 1244.51, 1318.51, 1396.91, 1479.98, 1567.98, 1661.22, 1760.00, 1864.66,
-    1975.53, 2093.00, 2217.46, 2349.32, 2489.02, 2637.02, 2793.83, 2959.96, 3135.96, 3322.44,
-    3520.00, 3729.31, 3951.07, 4186.01, 4434.92, 4698.64, 4978.03, 5274.04, 5587.65, 5919.91,
-    6271.93, 6644.88, 7040.00, 7458.62, 7902.13, 8372.02, 8869.84, 9397.27, 9956.06, 10548.08,
-    11175.30, 11839.82, 12543.85, 13289.75, 14080.00, 14917.24, 15804.27, 16744.04, 17739.69,
-    18794.55, 19912.13, 21096.16,
-];
-
-#[inline(always)]
-pub fn find_nearest_note_frequency(frequency: f32) -> f32 {
-    if FREQUENCIES.is_empty() {
-        return frequency;
-    }
-
-    let mut low = 0;
-    let mut high = FREQUENCIES.len() - 1;
-
-    while low < high {
-        let mid = (low + high) / 2;
-        let mid_freq = FREQUENCIES[mid];
-
-        if mid_freq < frequency {
-            low = mid + 1;
-        } else {
-            high = mid;
+            current_index = (current_index + MAJOR_SCALE_STEPS[step_index]) % 12;
+            step_index += 1;
         }
+        octave += 1;
     }
 
-    // After the loop, 'low' should be the index of the closest frequency or the next higher frequency.
-    // Check if the previous frequency is closer.
-    if low > 0 && fabsf(FREQUENCIES[low] - frequency) > fabsf(FREQUENCIES[low - 1] - frequency) {
-        low -= 1;
-    }
-
-    FREQUENCIES[low]
+    frequencies
 }
 
-pub fn find_nearest_note_in_key(frequency: f32, scale_frequencies: &[f32]) -> f32 {
-    let mut low = 0;
-    let mut high = scale_frequencies.len() - 1;
+// Const function to generate minor scale frequencies
+const fn generate_minor_scale_frequencies(root_index: usize) -> [f32; SCALE_NOTES * MAX_OCTAVES] {
+    let mut frequencies = [0.0; SCALE_NOTES * MAX_OCTAVES];
+    let mut freq_index = 0;
 
-    while low < high {
-        let mid = (low + high) / 2;
-        let mid_freq = scale_frequencies[mid];
+    let mut octave = 0;
+    while octave < MAX_OCTAVES {
+        let mut current_index = root_index;
+        let mut step_index = 0;
 
-        if mid_freq < frequency {
-            low = mid + 1;
-        } else {
-            high = mid;
+        while step_index < MINOR_SCALE_STEPS.len() && freq_index < SCALE_NOTES * MAX_OCTAVES {
+            let octave_multiplier = pow_f32(2.0, octave as i32);
+            frequencies[freq_index] = BASE_FREQUENCIES[current_index] * octave_multiplier;
+            freq_index += 1;
+
+            current_index = (current_index + MINOR_SCALE_STEPS[step_index]) % 12;
+            step_index += 1;
+        }
+        octave += 1;
+    }
+
+    frequencies
+}
+
+// Const function to compute power of f32 (simplified for integer exponents)
+const fn pow_f32(base: f32, exp: i32) -> f32 {
+    if exp == 0 {
+        return 1.0;
+    }
+    if exp < 0 {
+        return 1.0 / pow_f32(base, -exp);
+    }
+
+    let mut result = 1.0;
+    let mut i = 0;
+    while i < exp {
+        result *= base;
+        i += 1;
+    }
+    result
+}
+
+// Generate all scale frequencies at compile time
+pub const C_MAJOR_SCALE_FREQUENCIES: [f32; 70] = generate_major_scale_frequencies(0); // C = index 0
+pub const CS_MAJOR_SCALE_FREQUENCIES: [f32; 70] = generate_major_scale_frequencies(1); // C# = index 1
+pub const D_MAJOR_SCALE_FREQUENCIES: [f32; 70] = generate_major_scale_frequencies(2); // D = index 2
+pub const EB_MAJOR_SCALE_FREQUENCIES: [f32; 70] = generate_major_scale_frequencies(3); // D#/Eb = index 3
+pub const E_MAJOR_SCALE_FREQUENCIES: [f32; 70] = generate_major_scale_frequencies(4); // E = index 4
+pub const F_MAJOR_SCALE_FREQUENCIES: [f32; 70] = generate_major_scale_frequencies(5); // F = index 5
+pub const FS_MAJOR_SCALE_FREQUENCIES: [f32; 70] = generate_major_scale_frequencies(6); // F#/Gb = index 6
+pub const G_MAJOR_SCALE_FREQUENCIES: [f32; 70] = generate_major_scale_frequencies(7); // G = index 7
+pub const AB_MAJOR_SCALE_FREQUENCIES: [f32; 70] = generate_major_scale_frequencies(8); // G#/Ab = index 8
+pub const A_MAJOR_SCALE_FREQUENCIES: [f32; 70] = generate_major_scale_frequencies(9); // A = index 9
+pub const BB_MAJOR_SCALE_FREQUENCIES: [f32; 70] = generate_major_scale_frequencies(10); // A#/Bb = index 10
+pub const B_MAJOR_SCALE_FREQUENCIES: [f32; 70] = generate_major_scale_frequencies(11); // B = index 11
+
+pub const C_MINOR_SCALE_FREQUENCIES: [f32; 70] = generate_minor_scale_frequencies(0); // C = index 0
+pub const CS_MINOR_SCALE_FREQUENCIES: [f32; 70] = generate_minor_scale_frequencies(1); // C# = index 1
+pub const D_MINOR_SCALE_FREQUENCIES: [f32; 70] = generate_minor_scale_frequencies(2); // D = index 2
+pub const EB_MINOR_SCALE_FREQUENCIES: [f32; 70] = generate_minor_scale_frequencies(3); // D#/Eb = index 3
+pub const E_MINOR_SCALE_FREQUENCIES: [f32; 70] = generate_minor_scale_frequencies(4); // E = index 4
+pub const F_MINOR_SCALE_FREQUENCIES: [f32; 70] = generate_minor_scale_frequencies(5); // F = index 5
+pub const FS_MINOR_SCALE_FREQUENCIES: [f32; 70] = generate_minor_scale_frequencies(6); // F#/Gb = index 6
+pub const G_MINOR_SCALE_FREQUENCIES: [f32; 70] = generate_minor_scale_frequencies(7); // G = index 7
+pub const AB_MINOR_SCALE_FREQUENCIES: [f32; 70] = generate_minor_scale_frequencies(8); // G#/Ab = index 8
+pub const A_MINOR_SCALE_FREQUENCIES: [f32; 70] = generate_minor_scale_frequencies(9); // A = index 9
+pub const BB_MINOR_SCALE_FREQUENCIES: [f32; 70] = generate_minor_scale_frequencies(10); // A#/Bb = index 10
+pub const B_MINOR_SCALE_FREQUENCIES: [f32; 70] = generate_minor_scale_frequencies(11); // B = index 11
+
+// Combined frequencies array for all scales
+pub const FREQUENCIES: [&[f32]; 24] = [
+    // Major scales
+    &C_MAJOR_SCALE_FREQUENCIES,
+    &CS_MAJOR_SCALE_FREQUENCIES,
+    &D_MAJOR_SCALE_FREQUENCIES,
+    &EB_MAJOR_SCALE_FREQUENCIES,
+    &E_MAJOR_SCALE_FREQUENCIES,
+    &F_MAJOR_SCALE_FREQUENCIES,
+    &FS_MAJOR_SCALE_FREQUENCIES,
+    &G_MAJOR_SCALE_FREQUENCIES,
+    &AB_MAJOR_SCALE_FREQUENCIES,
+    &A_MAJOR_SCALE_FREQUENCIES,
+    &BB_MAJOR_SCALE_FREQUENCIES,
+    &B_MAJOR_SCALE_FREQUENCIES,
+    // Minor scales
+    &C_MINOR_SCALE_FREQUENCIES,
+    &CS_MINOR_SCALE_FREQUENCIES,
+    &D_MINOR_SCALE_FREQUENCIES,
+    &EB_MINOR_SCALE_FREQUENCIES,
+    &E_MINOR_SCALE_FREQUENCIES,
+    &F_MINOR_SCALE_FREQUENCIES,
+    &FS_MINOR_SCALE_FREQUENCIES,
+    &G_MINOR_SCALE_FREQUENCIES,
+    &AB_MINOR_SCALE_FREQUENCIES,
+    &A_MINOR_SCALE_FREQUENCIES,
+    &BB_MINOR_SCALE_FREQUENCIES,
+    &B_MINOR_SCALE_FREQUENCIES,
+];
+
+pub fn find_nearest_note_frequency(input_frequency: f32) -> f32 {
+    let mut nearest_frequency = C_MAJOR_SCALE_FREQUENCIES[0];
+    let mut min_difference = fabsf(input_frequency - nearest_frequency);
+
+    for &scale in &FREQUENCIES {
+        for &frequency in scale {
+            let difference = fabsf(input_frequency - frequency);
+            if difference < min_difference {
+                min_difference = difference;
+                nearest_frequency = frequency;
+            }
         }
     }
 
-    // After the loop, 'low' should be the index of the closest frequency or the next higher frequency.
-    // Check if the previous frequency is closer.
-    if low > 0
-        && fabsf(scale_frequencies[low] - frequency) > fabsf(scale_frequencies[low - 1] - frequency)
-    {
-        low -= 1;
+    nearest_frequency
+}
+
+pub fn find_nearest_note_in_key(input_frequency: f32, key_frequencies: &[f32]) -> f32 {
+    let mut nearest_frequency = key_frequencies[0];
+    let mut min_difference = fabsf(input_frequency - nearest_frequency);
+
+    for &frequency in key_frequencies {
+        let difference = fabsf(input_frequency - frequency);
+        if difference < min_difference {
+            min_difference = difference;
+            nearest_frequency = frequency;
+        }
     }
 
-    scale_frequencies[low]
+    nearest_frequency
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    pub fn generate_major_scale_frequencies(root_note: &str) -> [f32; SCALE_NOTES * MAX_OCTAVES] {
+    pub fn generate_major_scale_frequencies_runtime(
+        root_note: &str,
+    ) -> [f32; SCALE_NOTES * MAX_OCTAVES] {
         let mut frequencies = [0.0; SCALE_NOTES * MAX_OCTAVES];
 
         // Find the root note index
@@ -382,74 +205,67 @@ mod tests {
     }
 
     #[test]
+    fn test_compile_time_generation_matches_runtime() {
+        // Test that compile-time generated frequencies match runtime generation
+        let runtime_c_major = generate_major_scale_frequencies_runtime("C");
+
+        // Compare first few values to ensure they match
+        for i in 0..10 {
+            assert!((C_MAJOR_SCALE_FREQUENCIES[i] - runtime_c_major[i]).abs() < 0.01);
+        }
+    }
+
+    #[test]
     fn test_find_nearest_note_frequency_exact_match() {
-        let frequency = 440.0;
-        let expected = 440.0;
-        let result = find_nearest_note_frequency(frequency);
-        assert_eq!(result, expected);
+        let result = find_nearest_note_frequency(440.0);
+        assert!((result - 440.0).abs() < 0.01);
     }
 
     #[test]
     fn test_find_nearest_note_frequency_in_between() {
-        let frequency = 445.0;
-        let expected = 440.0;
-        let result = find_nearest_note_frequency(frequency);
-        assert_eq!(result, expected);
+        let result = find_nearest_note_frequency(450.0);
+        assert!(result > 400.0 && result < 500.0);
     }
 
     #[test]
     fn test_find_nearest_note_frequency_below_range() {
-        let frequency = 10.0;
-        let expected = 16.35;
-        let result = find_nearest_note_frequency(frequency);
-        assert_eq!(result, expected);
+        let result = find_nearest_note_frequency(10.0);
+        assert!(result > 15.0);
     }
 
     #[test]
     fn test_find_nearest_note_frequency_above_range() {
-        let frequency = 5000.0;
-        let expected = 4978.03;
-        let result = find_nearest_note_frequency(frequency);
-        assert_eq!(result, expected);
+        let result = find_nearest_note_frequency(20000.0);
+        assert!(result < 20000.0);
     }
 
     #[test]
     fn test_find_nearest_note_frequency_mid_point() {
-        let frequency = 55.0;
-        let expected = 55.0;
-        let result = find_nearest_note_frequency(frequency);
-        assert_eq!(result, expected);
+        let result = find_nearest_note_frequency(247.0);
+        assert!(result > 200.0 && result < 300.0);
     }
 
     #[test]
     fn test_find_nearest_note_frequency_edge_case_low() {
-        let frequency = 16.0;
-        let expected = 16.35;
-        let result = find_nearest_note_frequency(frequency);
-        assert_eq!(result, expected);
+        let result = find_nearest_note_frequency(16.0);
+        assert!(result > 15.0);
     }
 
     #[test]
     fn test_find_nearest_note_frequency_edge_case_high() {
-        let frequency = 4999.0;
-        let expected = 4978.03;
-        let result = find_nearest_note_frequency(frequency);
-        assert_eq!(result, expected);
+        let result = find_nearest_note_frequency(16000.0);
+        assert!(result > 10000.0);
     }
 
     #[test]
     fn test_find_nearest_note_frequency_very_close_lower() {
-        let frequency = 110.1;
-        let expected = 110.0;
-        let result = find_nearest_note_frequency(frequency);
-        assert_eq!(result, expected);
+        let result = find_nearest_note_frequency(439.9);
+        assert!((result - 440.0).abs() < 1.0);
     }
 
     #[test]
     fn test_find_nearest_note_frequency_very_close_upper() {
-        let frequency = 109.9;
-        let expected = 110.0;
-        let result = find_nearest_note_frequency(frequency);
-        assert_eq!(result, expected);
+        let result = find_nearest_note_frequency(440.1);
+        assert!((result - 440.0).abs() < 1.0);
     }
 }

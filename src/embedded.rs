@@ -64,15 +64,9 @@ pub fn process_autotune_embedded<const FFT_SIZE: usize, const HALF_FFT_SIZE: usi
     let mut dynamic_state = crate::AutotuneState::new(state.config);
 
     // Copy fixed arrays to dynamic arrays
-    dynamic_state
-        .last_input_phases
-        .copy_from_slice(&state.last_input_phases);
-    dynamic_state
-        .last_output_phases
-        .copy_from_slice(&state.last_output_phases);
-    dynamic_state
-        .synthesis_magnitudes
-        .copy_from_slice(&state.synthesis_magnitudes);
+    dynamic_state.last_input_phases.copy_from_slice(&state.last_input_phases);
+    dynamic_state.last_output_phases.copy_from_slice(&state.last_output_phases);
+    dynamic_state.synthesis_magnitudes.copy_from_slice(&state.synthesis_magnitudes);
     dynamic_state
         .synthesis_frequencies
         .copy_from_slice(&state.synthesis_frequencies);
@@ -83,15 +77,9 @@ pub fn process_autotune_embedded<const FFT_SIZE: usize, const HALF_FFT_SIZE: usi
         crate::core::process_autotune(input_buffer, output_buffer, &mut dynamic_state, settings);
 
     // Copy back
-    state
-        .last_input_phases
-        .copy_from_slice(&dynamic_state.last_input_phases);
-    state
-        .last_output_phases
-        .copy_from_slice(&dynamic_state.last_output_phases);
-    state
-        .synthesis_magnitudes
-        .copy_from_slice(&dynamic_state.synthesis_magnitudes);
+    state.last_input_phases.copy_from_slice(&dynamic_state.last_input_phases);
+    state.last_output_phases.copy_from_slice(&dynamic_state.last_output_phases);
+    state.synthesis_magnitudes.copy_from_slice(&dynamic_state.synthesis_magnitudes);
     state
         .synthesis_frequencies
         .copy_from_slice(&dynamic_state.synthesis_frequencies);

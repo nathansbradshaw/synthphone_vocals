@@ -1,7 +1,5 @@
 //! Mathematical utilities
 
-use libm::{floorf, fmodf};
-
 /// Clamp a value between min and max
 #[inline(always)]
 pub fn clamp(value: f32, min: f32, max: f32) -> f32 {

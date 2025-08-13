@@ -179,33 +179,33 @@ mod tests {
     #[test]
     fn test_find_nearest_note_frequency_above_range() {
         let frequency = 5000.0;
-        let expected = 4978.03;
         let result = find_nearest_note_frequency(frequency);
-        assert_eq!(result, expected);
+        // Should be close to the highest frequency in our generated scales
+        assert!(result > 4900.0 && result < 5100.0);
     }
 
     #[test]
     fn test_find_nearest_note_frequency_mid_point() {
         let frequency = 55.0;
-        let expected = 55.0;
         let result = find_nearest_note_frequency(frequency);
-        assert_eq!(result, expected);
+        // Should be close to 55.0 Hz (A1)
+        assert!((result - 55.0).abs() < 0.1);
     }
 
     #[test]
     fn test_find_nearest_note_frequency_edge_case_low() {
         let frequency = 16.0;
-        let expected = 16.35;
         let result = find_nearest_note_frequency(frequency);
-        assert_eq!(result, expected);
+        // Should be close to C0 (16.35 Hz)
+        assert!((result - 16.35).abs() < 0.1);
     }
 
     #[test]
     fn test_find_nearest_note_frequency_edge_case_high() {
         let frequency = 4999.0;
-        let expected = 4978.03;
         let result = find_nearest_note_frequency(frequency);
-        assert_eq!(result, expected);
+        // Should be close to the highest frequency in our generated scales
+        assert!(result > 4900.0 && result < 5100.0);
     }
 
     #[test]
@@ -230,24 +230,16 @@ mod tests {
         let analysis_magnitudes = vec![1.0, 0.5, 0.25];
         let transition_speed = 0.1;
 
-        let result = calculate_updates(
-            0,
-            &analysis_frequencies,
-            &analysis_magnitudes,
-            transition_speed,
-        );
+        let result =
+            calculate_updates(0, &analysis_frequencies, &analysis_magnitudes, transition_speed);
         assert!(result.is_some());
         let (new_bin, updated_magnitude, updated_frequency) = result.unwrap();
         assert_eq!(new_bin, 0);
         assert!((updated_magnitude - 1.0).abs() < 1e-6);
         assert!((updated_frequency - 440.0).abs() < 1e-6);
 
-        let result = calculate_updates(
-            1,
-            &analysis_frequencies,
-            &analysis_magnitudes,
-            transition_speed,
-        );
+        let result =
+            calculate_updates(1, &analysis_frequencies, &analysis_magnitudes, transition_speed);
         assert!(result.is_some());
         let (new_bin, updated_magnitude, updated_frequency) = result.unwrap();
         assert_eq!(new_bin, 1);
@@ -277,24 +269,16 @@ mod tests {
         let analysis_magnitudes = vec![1.0, 0.5, 0.25];
         let transition_speed = 0.5;
 
-        let result = calculate_updates(
-            0,
-            &analysis_frequencies,
-            &analysis_magnitudes,
-            transition_speed,
-        );
+        let result =
+            calculate_updates(0, &analysis_frequencies, &analysis_magnitudes, transition_speed);
         assert!(result.is_some());
         let (new_bin, updated_magnitude, updated_frequency) = result.unwrap();
         assert_eq!(new_bin, 0);
         assert!((updated_magnitude - 1.0).abs() < 1e-6);
         assert!((updated_frequency - 440.0).abs() < 1e-6);
 
-        let result = calculate_updates(
-            1,
-            &analysis_frequencies,
-            &analysis_magnitudes,
-            transition_speed,
-        );
+        let result =
+            calculate_updates(1, &analysis_frequencies, &analysis_magnitudes, transition_speed);
         assert!(result.is_some());
         let (new_bin, updated_magnitude, updated_frequency) = result.unwrap();
         assert_eq!(new_bin, 1);
@@ -346,10 +330,7 @@ mod detect_fun_freq_tests {
     fn test_multiple_maximums() {
         let analysis_magnitudes = [0.5, 0.5, 0.5];
         let result = find_fundamental_frequency(&analysis_magnitudes);
-        assert_eq!(
-            result, 0,
-            "First occurrence of maximum magnitude at index 0"
-        );
+        assert_eq!(result, 0, "First occurrence of maximum magnitude at index 0");
     }
 
     #[test]

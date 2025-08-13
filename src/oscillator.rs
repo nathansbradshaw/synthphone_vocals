@@ -15,12 +15,7 @@ pub enum Waveform {
 
 impl Oscillator {
     pub fn new(freq: f32, sample_rate: f32, waveform: Waveform) -> Self {
-        Self {
-            freq,
-            sample_rate,
-            phase: 0.0,
-            waveform,
-        }
+        Self { freq, sample_rate, phase: 0.0, waveform }
     }
 
     pub fn set_waveform(&mut self, waveform: Waveform) {
