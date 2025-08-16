@@ -1,6 +1,6 @@
 [package]
 name = "synthphone_vocals"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "Real-time autotune library for embedded and desktop applications"
 license = "MIT"
@@ -13,7 +13,6 @@ readme = "README.md"
 default = ["embedded"]
 std = []
 embedded = ["cortex-m"]
-desktop = ["std"]
 cepstral-smoothing = []
 formant-shifting = ["cepstral-smoothing"]
 debug-logging = []

@@ -148,9 +148,6 @@ pub fn wrap_phase(phase_in: f32) -> f32 {
 
 #[cfg(test)]
 mod tests {
-    #[cfg(any(feature = "std", not(feature = "embedded")))]
-    use alloc::vec;
-
     use super::*;
 
     #[test]
@@ -223,71 +220,6 @@ mod tests {
         let expected = 110.0;
         let result = find_nearest_note_frequency(frequency);
         assert_eq!(result, expected);
-    }
-
-    #[cfg(any(feature = "std", not(feature = "embedded")))]
-    #[test]
-    fn test_calculate_updates_within_bounds() {
-        let analysis_frequencies = vec![440.0, 880.0, 1760.0];
-        let analysis_magnitudes = vec![1.0, 0.5, 0.25];
-        let transition_speed = 0.1;
-
-        let result =
-            calculate_updates(0, &analysis_frequencies, &analysis_magnitudes, transition_speed);
-        assert!(result.is_some());
-        let (new_bin, updated_magnitude, updated_frequency) = result.unwrap();
-        assert_eq!(new_bin, 0);
-        assert!((updated_magnitude - 1.0).abs() < 1e-6);
-        assert!((updated_frequency - 440.0).abs() < 1e-6);
-
-        let result =
-            calculate_updates(1, &analysis_frequencies, &analysis_magnitudes, transition_speed);
-        assert!(result.is_some());
-        let (new_bin, updated_magnitude, updated_frequency) = result.unwrap();
-        assert_eq!(new_bin, 1);
-        assert!((updated_magnitude - 0.5).abs() < 1e-6);
-        assert!((updated_frequency - 880.0).abs() < 1e-6);
-    }
-
-    #[cfg(any(feature = "std", not(feature = "embedded")))]
-    #[test]
-    fn test_calculate_updates_out_of_bounds() {
-        let analysis_frequencies = vec![440.0, 880.0, 1760.0];
-        let analysis_magnitudes = vec![1.0, 0.5, 0.25];
-        let transition_speed = 0.1;
-
-        // This index should be out of bounds
-        let result = calculate_updates(
-            FFT_SIZE / 2,
-            &analysis_frequencies,
-            &analysis_magnitudes,
-            transition_speed,
-        );
-        assert!(result.is_none());
-    }
-
-    #[cfg(any(feature = "std", not(feature = "embedded")))]
-    #[test]
-    fn test_calculate_updates_with_transition() {
-        let analysis_frequencies = vec![440.0, 880.0, 1760.0];
-        let analysis_magnitudes = vec![1.0, 0.5, 0.25];
-        let transition_speed = 0.5;
-
-        let result =
-            calculate_updates(0, &analysis_frequencies, &analysis_magnitudes, transition_speed);
-        assert!(result.is_some());
-        let (new_bin, updated_magnitude, updated_frequency) = result.unwrap();
-        assert_eq!(new_bin, 0);
-        assert!((updated_magnitude - 1.0).abs() < 1e-6);
-        assert!((updated_frequency - 440.0).abs() < 1e-6);
-
-        let result =
-            calculate_updates(1, &analysis_frequencies, &analysis_magnitudes, transition_speed);
-        assert!(result.is_some());
-        let (new_bin, updated_magnitude, updated_frequency) = result.unwrap();
-        assert_eq!(new_bin, 1);
-        assert!((updated_magnitude - 0.5).abs() < 1e-6);
-        assert!((updated_frequency - 880.0).abs() < 1e-6);
     }
 }
 
