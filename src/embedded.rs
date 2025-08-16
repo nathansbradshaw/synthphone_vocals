@@ -23,8 +23,6 @@ impl<const FFT_SIZE: usize, const HALF_FFT_SIZE: usize>
 {
     /// Create a new embedded state
     pub fn new(config: AutotuneConfig) -> Self {
-        // const_assert!(HALF_FFT_SIZE == FFT_SIZE / 2);
-
         Self {
             last_input_phases: [0.0; HALF_FFT_SIZE],
             last_output_phases: [0.0; HALF_FFT_SIZE],
@@ -45,48 +43,115 @@ impl<const FFT_SIZE: usize, const HALF_FFT_SIZE: usize>
     }
 }
 
-/// Embedded-specific processing function with fixed-size arrays
+/// Truly no_std embedded processing function with fixed-size arrays
 pub fn process_autotune_embedded<const FFT_SIZE: usize, const HALF_FFT_SIZE: usize>(
     input_buffer: &[f32; FFT_SIZE],
     output_buffer: &mut [f32; FFT_SIZE],
     state: &mut EmbeddedAutotuneState<FFT_SIZE, HALF_FFT_SIZE>,
     settings: &MusicalSettings,
 ) -> Result<(), AutotuneError> {
-    // Implementation would mirror core::process_autotune but use fixed arrays
-    // This avoids heap allocation for embedded systems
-
-    if FFT_SIZE != 1024 {
-        return Err(AutotuneError::UnsupportedFftSize);
-    }
-
-    // For now, delegate to the main implementation with conversion
-    // In a full implementation, this would be optimized for embedded use
-    let mut dynamic_state = crate::AutotuneState::new(state.config);
-
-    // Copy fixed arrays to dynamic arrays
-    dynamic_state.last_input_phases.copy_from_slice(&state.last_input_phases);
-    dynamic_state.last_output_phases.copy_from_slice(&state.last_output_phases);
-    dynamic_state.synthesis_magnitudes.copy_from_slice(&state.synthesis_magnitudes);
-    dynamic_state
-        .synthesis_frequencies
-        .copy_from_slice(&state.synthesis_frequencies);
-    dynamic_state.previous_pitch_shift_ratio = state.previous_pitch_shift_ratio;
-
-    // Process
-    let result =
-        crate::core::process_autotune(input_buffer, output_buffer, &mut dynamic_state, settings);
-
-    // Copy back
-    state.last_input_phases.copy_from_slice(&dynamic_state.last_input_phases);
-    state.last_output_phases.copy_from_slice(&dynamic_state.last_output_phases);
-    state.synthesis_magnitudes.copy_from_slice(&dynamic_state.synthesis_magnitudes);
-    state
-        .synthesis_frequencies
-        .copy_from_slice(&dynamic_state.synthesis_frequencies);
-    state.previous_pitch_shift_ratio = dynamic_state.previous_pitch_shift_ratio;
-
-    result
+    crate::embedded_core::process_autotune_embedded_core(
+        input_buffer,
+        output_buffer,
+        &mut state.last_input_phases,
+        &mut state.last_output_phases,
+        &mut state.synthesis_magnitudes,
+        &mut state.synthesis_frequencies,
+        &mut state.previous_pitch_shift_ratio,
+        &state.config,
+        settings,
+    )
 }
 
 /// Convenience type for 1024-point FFT embedded state
 pub type EmbeddedAutotuneState1024 = EmbeddedAutotuneState<1024, 512>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_embedded_state_creation() {
+        let config = AutotuneConfig {
+            fft_size: 1024,
+            hop_size: 256,
+            sample_rate: 48000.0,
+            pitch_correction_strength: 0.8,
+            transition_speed: 0.1,
+            ..Default::default()
+        };
+
+        let state = EmbeddedAutotuneState1024::new(config);
+
+        // Verify initial state
+        assert_eq!(state.previous_pitch_shift_ratio, 1.0);
+        assert_eq!(state.config.fft_size, 1024);
+        assert_eq!(state.config.sample_rate, 48000.0);
+
+        // Verify arrays are properly initialized
+        assert_eq!(state.last_input_phases.len(), 512);
+        assert_eq!(state.last_output_phases.len(), 512);
+        assert!(state.last_input_phases.iter().all(|&x| x == 0.0));
+        assert!(state.last_output_phases.iter().all(|&x| x == 0.0));
+    }
+
+    #[test]
+    fn test_embedded_state_reset() {
+        let config = AutotuneConfig::default();
+        let mut state = EmbeddedAutotuneState1024::new(config);
+
+        // Modify some values
+        state.last_input_phases[0] = 3.14;
+        state.previous_pitch_shift_ratio = 2.0;
+
+        // Reset and verify
+        state.reset();
+        assert_eq!(state.last_input_phases[0], 0.0);
+        assert_eq!(state.previous_pitch_shift_ratio, 1.0);
+    }
+
+    #[test]
+    fn test_embedded_autotune_processing() {
+        let config = AutotuneConfig {
+            fft_size: 1024,
+            hop_size: 256,
+            sample_rate: 48000.0,
+            pitch_correction_strength: 0.0, // No correction for test
+            ..Default::default()
+        };
+
+        let mut state = EmbeddedAutotuneState1024::new(config);
+        let settings = MusicalSettings::default();
+
+        // Test with silence
+        let input = [0.0f32; 1024];
+        let mut output = [0.0f32; 1024];
+
+        let result = process_autotune_embedded(&input, &mut output, &mut state, &settings);
+        assert!(result.is_ok());
+
+        // With no correction, output should be close to input
+        for (i, &sample) in output.iter().enumerate() {
+            assert!(sample.abs() < 0.1, "Sample {} too large: {}", i, sample);
+        }
+    }
+
+    #[test]
+    fn test_no_std_compatibility() {
+        // This test verifies that we can use the embedded types
+        // without any std-only features
+        let config = AutotuneConfig::default();
+        let state = EmbeddedAutotuneState1024::new(config);
+
+        // These operations should all work in no_std
+        assert_eq!(core::mem::size_of_val(&state.last_input_phases), 512 * 4);
+        assert_eq!(core::mem::size_of_val(&state.last_output_phases), 512 * 4);
+        assert_eq!(core::mem::size_of_val(&state.synthesis_magnitudes), 512 * 4);
+        assert_eq!(core::mem::size_of_val(&state.synthesis_frequencies), 512 * 4);
+
+        // Total state size should be predictable
+        let total_size = core::mem::size_of::<EmbeddedAutotuneState1024>();
+        assert!(total_size >= 8192); // At least 8KB for the arrays
+        assert!(total_size < 10240); // Less than 10KB total
+    }
+}

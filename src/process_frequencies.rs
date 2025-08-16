@@ -148,6 +148,7 @@ pub fn wrap_phase(phase_in: f32) -> f32 {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(any(feature = "std", not(feature = "embedded")))]
     use alloc::vec;
 
     use super::*;
@@ -224,6 +225,7 @@ mod tests {
         assert_eq!(result, expected);
     }
 
+    #[cfg(any(feature = "std", not(feature = "embedded")))]
     #[test]
     fn test_calculate_updates_within_bounds() {
         let analysis_frequencies = vec![440.0, 880.0, 1760.0];
@@ -247,6 +249,7 @@ mod tests {
         assert!((updated_frequency - 880.0).abs() < 1e-6);
     }
 
+    #[cfg(any(feature = "std", not(feature = "embedded")))]
     #[test]
     fn test_calculate_updates_out_of_bounds() {
         let analysis_frequencies = vec![440.0, 880.0, 1760.0];
@@ -263,6 +266,7 @@ mod tests {
         assert!(result.is_none());
     }
 
+    #[cfg(any(feature = "std", not(feature = "embedded")))]
     #[test]
     fn test_calculate_updates_with_transition() {
         let analysis_frequencies = vec![440.0, 880.0, 1760.0];

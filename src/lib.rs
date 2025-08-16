@@ -28,11 +28,12 @@
 //! process_autotune(&input, &mut output, &mut state, &settings)?;
 //! ```
 
+// Only include alloc when we're not in embedded-only mode
+#[cfg(any(feature = "std", not(feature = "embedded")))]
 extern crate alloc;
 
 // Core modules
 pub mod config;
-pub mod core;
 pub mod error;
 pub mod state;
 
@@ -54,6 +55,14 @@ pub mod utils;
 #[cfg_attr(docsrs, doc(cfg(feature = "embedded")))]
 pub mod embedded;
 
+#[cfg(feature = "embedded")]
+#[cfg_attr(docsrs, doc(cfg(feature = "embedded")))]
+pub mod embedded_core;
+
+// Desktop/std modules - only when not embedded-only
+#[cfg(any(feature = "std", not(feature = "embedded")))]
+pub mod core;
+
 // Existing modules (kept for compatibility)
 pub mod fade;
 pub mod normal_phase_advance;
@@ -61,9 +70,16 @@ pub mod oscillator;
 
 // Re-export main API
 pub use config::AutotuneConfig;
-pub use core::process_autotune;
 pub use error::AutotuneError;
-pub use state::{AutotuneState, MusicalSettings};
+pub use state::MusicalSettings;
+
+// Only export AutotuneState when not in embedded-only mode
+#[cfg(any(feature = "std", not(feature = "embedded")))]
+pub use state::AutotuneState;
+
+// Only export the std version when available
+#[cfg(any(feature = "std", not(feature = "embedded")))]
+pub use core::process_autotune;
 
 // Re-export commonly used functions
 pub use frequencies::{find_nearest_note_frequency, find_nearest_note_in_key};

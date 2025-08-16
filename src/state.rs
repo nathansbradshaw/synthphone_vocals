@@ -2,7 +2,10 @@
 
 use crate::config::AutotuneConfig;
 
+// Only include Vec-based state when not in embedded-only mode
+#[cfg(any(feature = "std", not(feature = "embedded")))]
 use alloc::vec;
+#[cfg(any(feature = "std", not(feature = "embedded")))]
 #[cfg(not(feature = "std"))]
 use alloc::vec::Vec;
 
@@ -30,6 +33,8 @@ impl Default for MusicalSettings {
     }
 }
 
+// Only compile the Vec-based AutotuneState when not in embedded-only mode
+#[cfg(any(feature = "std", not(feature = "embedded")))]
 /// State that needs to be maintained between processing calls
 pub struct AutotuneState {
     /// Phase tracking for input analysis
@@ -46,6 +51,7 @@ pub struct AutotuneState {
     config: AutotuneConfig,
 }
 
+#[cfg(any(feature = "std", not(feature = "embedded")))]
 impl AutotuneState {
     /// Create a new state with the given configuration
     pub fn new(config: AutotuneConfig) -> Self {
@@ -190,6 +196,7 @@ mod tests {
     use super::*;
     use crate::AutotuneConfig;
 
+    #[cfg(any(feature = "std", not(feature = "embedded")))]
     #[test]
     fn test_state_creation() {
         let config = AutotuneConfig::default();
@@ -200,6 +207,7 @@ mod tests {
         assert_eq!(state.previous_pitch_shift_ratio, 1.0);
     }
 
+    #[cfg(any(feature = "std", not(feature = "embedded")))]
     #[test]
     fn test_state_validation() {
         let config = AutotuneConfig::default();
@@ -208,6 +216,7 @@ mod tests {
         assert!(state.validate().is_ok());
     }
 
+    #[cfg(any(feature = "std", not(feature = "embedded")))]
     #[test]
     fn test_state_reset() {
         let config = AutotuneConfig::default();
@@ -223,6 +232,7 @@ mod tests {
         assert_eq!(state.previous_pitch_shift_ratio, 1.0);
     }
 
+    #[cfg(any(feature = "std", not(feature = "embedded")))]
     #[test]
     fn test_slice_access() {
         let config = AutotuneConfig::default();
