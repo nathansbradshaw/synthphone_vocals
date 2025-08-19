@@ -59,6 +59,10 @@ pub mod embedded;
 #[cfg_attr(docsrs, doc(cfg(feature = "embedded")))]
 pub mod embedded_core;
 
+#[cfg(feature = "embedded")]
+#[cfg_attr(docsrs, doc(cfg(feature = "embedded")))]
+pub mod embedded_realtime;
+
 // Desktop/std modules - only when not embedded-only
 #[cfg(any(feature = "std", not(feature = "embedded")))]
 pub mod core;

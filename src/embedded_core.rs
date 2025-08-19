@@ -164,9 +164,3 @@ fn calculate_target_frequency(fundamental_freq: f32, settings: &MusicalSettings)
         get_frequency(settings.key, settings.note, settings.octave, false)
     }
 }
-
-/// Calculate octave multiplier
-fn calculate_octave_factor(octave: i8) -> f32 {
-    // Each octave doubles/halves the frequency
-    libm::powf(2.0, octave as f32)
-}
