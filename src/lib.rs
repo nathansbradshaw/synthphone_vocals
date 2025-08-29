@@ -44,7 +44,6 @@ pub mod keys;
 pub mod process_frequencies;
 
 // Buffer management
-pub mod circular_buffer;
 pub mod ring_buffer;
 
 // Utility modules
@@ -54,14 +53,6 @@ pub mod utils;
 #[cfg(feature = "embedded")]
 #[cfg_attr(docsrs, doc(cfg(feature = "embedded")))]
 pub mod embedded;
-
-#[cfg(feature = "embedded")]
-#[cfg_attr(docsrs, doc(cfg(feature = "embedded")))]
-pub mod embedded_core;
-
-#[cfg(feature = "embedded")]
-#[cfg_attr(docsrs, doc(cfg(feature = "embedded")))]
-pub mod embedded_realtime;
 
 // Desktop/std modules - only when not embedded-only
 #[cfg(any(feature = "std", not(feature = "embedded")))]
