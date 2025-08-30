@@ -78,7 +78,7 @@ pub fn process_autotune_embedded(
     ) {
         // Update stored ratio for next iteration
         // I am not sure what to do about this one
-        // *previous_pitch_shift_ratio = pitch_shift_ratio;
+        *previous_pitch_shift_ratio = pitch_shift_ratio;
 
         // Apply pitch shifting and formant processing to spectrum
         apply_spectral_shift(
@@ -327,7 +327,7 @@ pub fn calculate_pitch_shift_ratio(
     let clamped_ratio = raw_ratio.clamp(0.5, 2.0);
 
     // Apply aggressive temporal smoothing to reduce pitch wobble
-    const SMOOTHING_FACTOR: f32 = 0.99;
+    const SMOOTHING_FACTOR: f32 = 0.98;
     let smoothed_pitch_shift_ratio =
         clamped_ratio * SMOOTHING_FACTOR + previous_ratio * (1.0 - SMOOTHING_FACTOR);
 
