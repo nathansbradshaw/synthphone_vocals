@@ -1,56 +1,43 @@
-//! Truly no_std core implementation for embedded systems
-//! This avoids all heap allocation by using fixed-size arrays
+use core::f32::consts::PI;
 
-use crate::frequencies::{D_MAJOR_SCALE_FREQUENCIES, find_nearest_note_in_key};
-use crate::keys::get_frequency;
-use crate::process_frequencies::{collect_harmonics, find_fundamental_frequency, wrap_phase};
-use crate::ring_buffer::RingBuffer;
-use crate::{AutotuneConfig, AutotuneError, MusicalSettings, hann_window};
-use libm::{atan2f, cosf, expf, floorf, logf, sinf, sqrtf};
-use microfft;
+use libm::{atan2f, cosf, expf, fabsf, floorf, logf, sinf, sqrtf};
 
-const PI: f32 = 3.14159265358979323846264338327950288f32;
+use crate::{
+    AutotuneConfig, MusicalSettings, find_fundamental_frequency, find_nearest_note_in_key,
+    frequencies::D_MAJOR_SCALE_FREQUENCIES, get_frequency, hann_window,
+    process_frequencies::collect_harmonics, ring_buffer::RingBuffer, wrap_phase,
+};
 
-// TODO figure out a way to allow more FFT sizes
+pub const SAMPLE_RATE: f32 = 48_014.312;
 pub const FFT_SIZE: usize = 1024;
-pub const HALF_FFT_SIZE: usize = FFT_SIZE / 2;
-pub const HOP_SIZE: usize = 512;
 pub const BUFFER_SIZE: usize = FFT_SIZE * 4;
+pub const HOP_SIZE: usize = 256;
 pub const BLOCK_SIZE: usize = 2;
 pub const BIN_WIDTH: f32 = SAMPLE_RATE as f32 / FFT_SIZE as f32 * 2.0;
-pub const SAMPLE_RATE: f32 = 48_014.312;
 
-/// Embedded autotune processing with fixed-size arrays only
-pub fn process_autotune_embedded(
-    input_buffer: &mut [f32; FFT_SIZE],
-    output_buffer: &mut [f32; FFT_SIZE],
+pub fn autotune_audio(
+    unwrapped_buffer: &mut [f32; FFT_SIZE],
     last_input_phases: &mut [f32; FFT_SIZE],
     last_output_phases: &mut [f32; FFT_SIZE],
-    previous_pitch_shift_ratio: &mut f32,
+    mut previous_pitch_shift_ratio: f32,
     config: &AutotuneConfig,
     settings: &MusicalSettings,
-) -> Result<(), AutotuneError> {
-    // TODO implemt these features
-    let _fft_size = 1024;
-    let _spectrum_size = 512;
-    let _hop_size = config.hop_size;
-    let _sample_rate = config.sample_rate;
-    let _pitch_correction_strength = config.pitch_correction_strength;
-
+) -> [f32; FFT_SIZE] {
     let analysis_window_buffer: [f32; FFT_SIZE] = hann_window::HANN_WINDOW;
     let mut full_spectrum: [microfft::Complex32; FFT_SIZE] =
         [microfft::Complex32 { re: 0.0, im: 0.0 }; FFT_SIZE];
-    let mut analysis_magnitudes = [0.0; HALF_FFT_SIZE];
-    let mut analysis_frequencies = [0.0; HALF_FFT_SIZE];
+    let mut analysis_magnitudes = [0.0; FFT_SIZE / 2];
+    let mut analysis_frequencies = [0.0; FFT_SIZE / 2];
     let mut synthesis_magnitudes: [f32; FFT_SIZE] = [0.0; FFT_SIZE];
     let mut synthesis_frequencies: [f32; FFT_SIZE] = [0.0; FFT_SIZE];
+    let mut _synthesis_count = [0; FFT_SIZE / 2];
 
     let formant = settings.formant;
     let is_auto = settings.note == 0;
     let note = settings.note;
 
     perform_fft_analysis(
-        input_buffer,
+        unwrapped_buffer,
         &analysis_window_buffer,
         last_input_phases,
         &mut analysis_magnitudes,
@@ -71,14 +58,13 @@ pub fn process_autotune_embedded(
         &analysis_magnitudes,
         &analysis_frequencies,
         is_auto,
-        note,
-        0, // key
-        0, // octave
-        *previous_pitch_shift_ratio,
+        settings.note,
+        settings.key,    // key
+        settings.octave, // octave
+        previous_pitch_shift_ratio,
     ) {
         // Update stored ratio for next iteration
-        // I am not sure what to do about this one
-        *previous_pitch_shift_ratio = pitch_shift_ratio;
+        previous_pitch_shift_ratio = pitch_shift_ratio;
 
         // Apply pitch shifting and formant processing to spectrum
         apply_spectral_shift(
@@ -93,16 +79,18 @@ pub fn process_autotune_embedded(
         );
     }
     // SYNTHESIS
+
+    let mut synthesis_output = [0.0f32; FFT_SIZE];
     perform_synthesis(
         &synthesis_magnitudes,
         &synthesis_frequencies,
         last_output_phases,
         &mut full_spectrum,
         &analysis_window_buffer,
-        output_buffer,
+        &mut synthesis_output,
     );
 
-    Ok(())
+    synthesis_output
 }
 
 /// Performs FFT analysis on the input buffer and extracts magnitude and frequency information.
@@ -133,8 +121,8 @@ pub fn perform_fft_analysis(
     input_buffer: &mut [f32; FFT_SIZE],
     window: &[f32; FFT_SIZE],
     last_input_phases: &mut [f32; FFT_SIZE],
-    analysis_magnitudes: &mut [f32; HALF_FFT_SIZE],
-    analysis_frequencies: &mut [f32; HALF_FFT_SIZE],
+    analysis_magnitudes: &mut [f32; FFT_SIZE / 2],
+    analysis_frequencies: &mut [f32; FFT_SIZE / 2],
 ) {
     // Apply windowing to reduce spectral leakage
     for i in 0..FFT_SIZE {
@@ -327,7 +315,7 @@ pub fn calculate_pitch_shift_ratio(
     let clamped_ratio = raw_ratio.clamp(0.5, 2.0);
 
     // Apply aggressive temporal smoothing to reduce pitch wobble
-    const SMOOTHING_FACTOR: f32 = 0.98;
+    const SMOOTHING_FACTOR: f32 = 0.99;
     let smoothed_pitch_shift_ratio =
         clamped_ratio * SMOOTHING_FACTOR + previous_ratio * (1.0 - SMOOTHING_FACTOR);
 
@@ -550,5 +538,17 @@ pub fn write_synthesis_output(
     // Add samples to output buffer using overlap-add (accumulation)
     for i in 0..FFT_SIZE {
         output_ring.add_at_offset(i as u32, output_samples[i]);
+    }
+}
+
+pub fn normalize_sample(sample: f32, target_peak: f32) -> f32 {
+    let abs_sample = fabsf(sample);
+    if abs_sample > target_peak {
+        // Soft limiting to prevent harsh clipping
+        let ratio = target_peak / abs_sample;
+        let soft_ratio = 1.0 - expf(-3.0 * ratio);
+        sample * soft_ratio
+    } else {
+        sample
     }
 }
