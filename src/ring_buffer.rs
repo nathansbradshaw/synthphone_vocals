@@ -109,7 +109,6 @@ impl<const N: usize> RingBuffer<N> {
     /// buffer.push(0.75);
     /// buffer.push(-0.25);
     /// ```
-    #[inline(always)]
     pub fn push(&self, v: f32) {
         let w = self.write.load(Ordering::Relaxed);
         unsafe { (*self.buf.get())[w as usize & (N - 1)] = v };
@@ -135,7 +134,6 @@ impl<const N: usize> RingBuffer<N> {
     /// buffer.push(0.5);
     /// let sample = buffer.pop(); // Returns 0.5
     /// ```
-    #[inline(always)]
     pub fn pop(&self) -> f32 {
         let r = self.read.load(Ordering::Relaxed);
         let v = unsafe {
@@ -164,7 +162,6 @@ impl<const N: usize> RingBuffer<N> {
     /// buffer.push(0.5);
     /// assert_eq!(buffer.write_index(), 1);
     /// ```
-    #[inline(always)]
     pub fn write_index(&self) -> u32 {
         self.write.load(core::sync::atomic::Ordering::Relaxed)
     }
@@ -184,7 +181,6 @@ impl<const N: usize> RingBuffer<N> {
     /// let buffer: RingBuffer<1024> = RingBuffer::new();
     /// buffer.advance_write(64); // Reserve 64 samples
     /// ```
-    #[inline(always)]
     pub fn advance_write(&self, n: u32) {
         use core::sync::atomic::Ordering;
         self.write.fetch_add(n, Ordering::Relaxed);
