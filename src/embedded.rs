@@ -3,17 +3,12 @@ use core::f32::consts::PI;
 use libm::{atan2f, cosf, expf, fabsf, floorf, logf, sinf, sqrtf};
 
 use crate::{
-    AutotuneConfig, MusicalSettings, find_fundamental_frequency, find_nearest_note_in_key,
-    frequencies::D_MAJOR_SCALE_FREQUENCIES, get_frequency, hann_window,
+    AutotuneConfig, MusicalSettings, fft_config, find_fundamental_frequency,
+    find_nearest_note_in_key, frequencies::D_MAJOR_SCALE_FREQUENCIES, get_frequency, hann_window,
     process_frequencies::collect_harmonics, ring_buffer::RingBuffer, wrap_phase,
 };
 
-pub const SAMPLE_RATE: f32 = 48_014.312;
-pub const FFT_SIZE: usize = 1024;
-pub const BUFFER_SIZE: usize = FFT_SIZE * 4;
-pub const HOP_SIZE: usize = 256;
-pub const BLOCK_SIZE: usize = 2;
-pub const BIN_WIDTH: f32 = SAMPLE_RATE as f32 / FFT_SIZE as f32 * 2.0;
+fft_config!(1024, 48_014.312);
 
 pub fn autotune_audio(
     unwrapped_buffer: &mut [f32; FFT_SIZE],
