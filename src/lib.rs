@@ -1,33 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-//! # Autotune Library
-//!
-//! A real-time autotune library designed to work in both embedded and desktop environments.
-//!
-//! ## Features
-//!
-//! - Real-time pitch correction
-//! - Musical key and scale support
-//! - Formant shifting (optional)
-//! - Both embedded (no_std) and desktop (std) support
-//! - Configurable FFT sizes and processing parameters
-//!
-//! ## Quick Start
-//!
-//! ```rust,ignore
-//! use autotune::{AutotuneConfig, AutotuneState, MusicalSettings, process_autotune};
-//!
-//! let config = AutotuneConfig::default();
-//! let mut state = AutotuneState::new(config);
-//! let settings = MusicalSettings::default();
-//!
-//! let input = vec![0.0f32; 1024];
-//! let mut output = vec![0.0f32; 1024];
-//!
-//! process_autotune(&input, &mut output, &mut state, &settings)?;
-//! ```
-
 // Core modules
 pub mod config;
 pub mod error;

@@ -1,4 +1,3 @@
-// // tools/build_quad_fade.rs
 // use std::f32;
 
 // fn main() {
