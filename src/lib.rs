@@ -12,6 +12,7 @@ pub mod frequencies;
 pub mod hann_window;
 pub mod keys;
 pub mod process_frequencies;
+pub mod process_vocal_effects_core;
 
 // Buffer management
 pub mod ring_buffer;

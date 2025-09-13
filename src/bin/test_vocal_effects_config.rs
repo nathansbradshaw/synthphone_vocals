@@ -1,21 +1,29 @@
-//! Test binary to demonstrate the autotune_config macro functionality
+//! Test binary to demonstrate the process_vocal_effects_config macro functionality
 //!
-//! This binary shows how to use the new autotune_config macro to create
+//! This binary shows how to use the new process_vocal_effects_config macro to create
 //! customized autotune functions with different FFT configurations.
 
-use synthphone_vocals::{AutotuneConfig, MusicalSettings, autotune_config, autotune_configs};
+use synthphone_vocals::{
+    AutotuneConfig, MusicalSettings, process_vocal_effects_config, process_vocal_effects_configs,
+};
 
 // Generate individual autotune configurations for different use cases
-autotune_config!(autotune_studio, 4096, 48000.0, hop_ratio = 0.125);
-autotune_config!(autotune_live, 512, 48000.0, hop_ratio = 0.5);
-autotune_config!(autotune_balanced, 2048, 48000.0, hop_ratio = 0.25);
-autotune_config!(autotune_embedded, 512, 44100.0, hop_ratio = 0.5, buffer_multiplier = 2);
+process_vocal_effects_config!(process_vocal_effects_studio, 4096, 48000.0, hop_ratio = 0.125);
+process_vocal_effects_config!(process_vocal_effects_live, 512, 48000.0, hop_ratio = 0.5);
+process_vocal_effects_config!(process_vocal_effects_balanced, 2048, 48000.0, hop_ratio = 0.25);
+process_vocal_effects_config!(
+    process_vocal_effects_embedded,
+    512,
+    44100.0,
+    hop_ratio = 0.5,
+    buffer_multiplier = 2
+);
 
 // Generate multiple configurations at once
-autotune_configs! {
-    draft => (autotune_draft, 512, 48000.0, hop_ratio = 0.5),
-    preview => (autotune_preview, 1024, 48000.0, hop_ratio = 0.25),
-    production => (autotune_production, 4096, 48000.0, hop_ratio = 0.125)
+process_vocal_effects_configs! {
+    draft => (process_vocal_effects_draft, 512, 48000.0, hop_ratio = 0.5),
+    preview => (process_vocal_effects_preview, 1024, 48000.0, hop_ratio = 0.25),
+    production => (process_vocal_effects_production, 4096, 48000.0, hop_ratio = 0.125)
 }
 
 /// Configuration data for comparison
@@ -31,7 +39,7 @@ struct ConfigInfo {
 
 const CONFIGS: &[ConfigInfo] = &[
     ConfigInfo {
-        name: "autotune_studio",
+        name: "process_vocal_effects_studio",
         fft_size: 4096,
         sample_rate: 48000.0,
         hop_ratio: 0.125,
@@ -40,7 +48,7 @@ const CONFIGS: &[ConfigInfo] = &[
         use_case: "High-quality studio processing",
     },
     ConfigInfo {
-        name: "autotune_live",
+        name: "process_vocal_effects_live",
         fft_size: 512,
         sample_rate: 48000.0,
         hop_ratio: 0.5,
@@ -49,7 +57,7 @@ const CONFIGS: &[ConfigInfo] = &[
         use_case: "Real-time live performance",
     },
     ConfigInfo {
-        name: "autotune_balanced",
+        name: "process_vocal_effects_balanced",
         fft_size: 2048,
         sample_rate: 48000.0,
         hop_ratio: 0.25,
@@ -58,7 +66,7 @@ const CONFIGS: &[ConfigInfo] = &[
         use_case: "General-purpose processing",
     },
     ConfigInfo {
-        name: "autotune_embedded",
+        name: "process_vocal_effects_embedded",
         fft_size: 512,
         sample_rate: 44100.0,
         hop_ratio: 0.5,
@@ -105,12 +113,12 @@ fn test_configuration() {
 
     // Test studio configuration (4096 FFT)
     {
-        println!("Testing autotune_studio (4096 FFT, high quality):");
+        println!("Testing process_vocal_effects_studio (4096 FFT, high quality):");
         let mut audio = create_test_audio::<4096>(440.0, 48000.0); // A4
         let (mut input_phases, mut output_phases) = create_phase_buffers::<4096>();
 
         let input_rms = calculate_rms(&audio);
-        let result = autotune_studio(
+        let result = process_vocal_effects_studio(
             &mut audio,
             &mut input_phases,
             &mut output_phases,
@@ -128,12 +136,12 @@ fn test_configuration() {
 
     // Test live configuration (512 FFT)
     {
-        println!("Testing autotune_live (512 FFT, low latency):");
+        println!("Testing process_vocal_effects_live (512 FFT, low latency):");
         let mut audio = create_test_audio::<512>(330.0, 48000.0); // E4
         let (mut input_phases, mut output_phases) = create_phase_buffers::<512>();
 
         let input_rms = calculate_rms(&audio);
-        let result = autotune_live(
+        let result = process_vocal_effects_live(
             &mut audio,
             &mut input_phases,
             &mut output_phases,
@@ -151,12 +159,12 @@ fn test_configuration() {
 
     // Test embedded configuration (256 FFT)
     {
-        println!("Testing autotune_embedded (512 FFT, memory optimized):");
+        println!("Testing process_vocal_effects_embedded (512 FFT, memory optimized):");
         let mut audio = create_test_audio::<512>(262.0, 44100.0); // C4
         let (mut input_phases, mut output_phases) = create_phase_buffers::<512>();
 
         let input_rms = calculate_rms(&audio);
-        let result = autotune_embedded(
+        let result = process_vocal_effects_embedded(
             &mut audio,
             &mut input_phases,
             &mut output_phases,
@@ -190,7 +198,7 @@ fn test_batch_configurations() {
         let mut audio = create_test_audio::<512>(220.0, 48000.0); // A3
         let (mut input_phases, mut output_phases) = create_phase_buffers::<512>();
 
-        let result = autotune_draft(
+        let result = process_vocal_effects_draft(
             &mut audio,
             &mut input_phases,
             &mut output_phases,
@@ -198,7 +206,7 @@ fn test_batch_configurations() {
             &config,
             &settings,
         );
-        println!("✓ autotune_draft: {} samples processed", result.len());
+        println!("✓ process_vocal_effects_draft: {} samples processed", result.len());
     }
 
     // Test preview quality
@@ -206,7 +214,7 @@ fn test_batch_configurations() {
         let mut audio = create_test_audio::<1024>(293.0, 48000.0); // D4
         let (mut input_phases, mut output_phases) = create_phase_buffers::<1024>();
 
-        let result = autotune_preview(
+        let result = process_vocal_effects_preview(
             &mut audio,
             &mut input_phases,
             &mut output_phases,
@@ -214,7 +222,7 @@ fn test_batch_configurations() {
             &config,
             &settings,
         );
-        println!("✓ autotune_preview: {} samples processed", result.len());
+        println!("✓ process_vocal_effects_preview: {} samples processed", result.len());
     }
 
     // Test production quality
@@ -222,7 +230,7 @@ fn test_batch_configurations() {
         let mut audio = create_test_audio::<4096>(349.0, 48000.0); // F4
         let (mut input_phases, mut output_phases) = create_phase_buffers::<4096>();
 
-        let result = autotune_production(
+        let result = process_vocal_effects_production(
             &mut audio,
             &mut input_phases,
             &mut output_phases,
@@ -230,7 +238,7 @@ fn test_batch_configurations() {
             &config,
             &settings,
         );
-        println!("✓ autotune_production: {} samples processed", result.len());
+        println!("✓ process_vocal_effects_production: {} samples processed", result.len());
     }
 
     println!();
@@ -270,7 +278,13 @@ fn demonstrate_custom_config() {
     println!();
 
     // Create a custom voice-optimized configuration
-    autotune_config!(autotune_voice_custom, 2048, 48000.0, hop_ratio = 0.25, buffer_multiplier = 4);
+    process_vocal_effects_config!(
+        process_vocal_effects_voice_custom,
+        2048,
+        48000.0,
+        hop_ratio = 0.25,
+        buffer_multiplier = 4
+    );
 
     println!("Generated custom voice processor with:");
     println!("  FFT Size: 2048 (good frequency resolution for voice)");
@@ -289,7 +303,7 @@ fn demonstrate_custom_config() {
     let (mut input_phases, mut output_phases) = create_phase_buffers::<2048>();
 
     let input_rms = calculate_rms(&voice_audio);
-    let result = autotune_voice_custom(
+    let result = process_vocal_effects_voice_custom(
         &mut voice_audio,
         &mut input_phases,
         &mut output_phases,
@@ -345,7 +359,9 @@ fn main() {
     println!("================================================");
     println!();
 
-    println!("This demonstration shows how to use the autotune_config! macro to create");
+    println!(
+        "This demonstration shows how to use the process_vocal_effects_config! macro to create"
+    );
     println!("customized autotune functions with different FFT configurations for");
     println!("various use cases like real-time processing, studio quality, embedded systems, etc.");
     println!();
@@ -377,9 +393,9 @@ fn main() {
     println!("- Use smaller hop ratios (more overlap) for better quality");
     println!("- Consider memory constraints for embedded applications");
     println!("- Test different configurations to find optimal balance");
-    println!("- Use autotune_configs! macro to generate multiple variants at once");
+    println!("- Use process_vocal_effects_configs! macro to generate multiple variants at once");
     println!();
 
     println!("✅ All tests completed successfully!");
-    println!("The autotune_config macro system is working correctly.");
+    println!("The process_vocal_effects_config macro system is working correctly.");
 }

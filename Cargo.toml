@@ -2,10 +2,9 @@
 name = "synthphone_vocals"
 version = "0.1.1"
 edition = "2024"
-description = "Real-time autotune library for embedded and desktop applications"
+description = "Real-time Vocal Effects library for embedded and desktop applications"
 license = "MIT"
-documentation = "https://docs.rs/autotune"
-keywords = ["audio", "dsp", "autotune", "embedded", "real-time"]
+keywords = ["audio", "dsp", "autotune", "vocals", "embedded", "real-time"]
 categories = ["multimedia::audio", "embedded", "no-std"]
 readme = "README.md"
 
@@ -34,9 +33,6 @@ hound = "3.4"
 criterion = "0.5"
 approx = "0.5"
 
-# [[bench]]
-# name = "autotune_benchmark"
-# harness = false
 
 [package.metadata.docs.rs]
 all-features = true
