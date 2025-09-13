@@ -526,12 +526,12 @@ pub fn perform_synthesis(
 ///
 /// * `output_samples` - Processed audio samples from synthesis
 /// * `output_ring` - Ring buffer to receive the samples
-pub fn write_synthesis_output(
-    output_samples: &[f32; FFT_SIZE],
+pub fn write_synthesis_output<const N: usize, const BUFFER_SIZE: usize>(
+    output_samples: &[f32; N],
     output_ring: &RingBuffer<BUFFER_SIZE>,
 ) {
     // Add samples to output buffer using overlap-add (accumulation)
-    for i in 0..FFT_SIZE {
+    for i in 0..N {
         output_ring.add_at_offset(i as u32, output_samples[i]);
     }
 }

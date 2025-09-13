@@ -38,6 +38,3 @@ pub use state::MusicalSettings;
 pub use frequencies::{find_nearest_note_frequency, find_nearest_note_in_key};
 pub use keys::{get_frequency, get_key, get_key_name, get_scale_by_key};
 pub use process_frequencies::{find_fundamental_frequency, wrap_phase};
-
-// Re-export FFT configuration macros
-// Note: Macros marked with #[macro_export] are automatically available at the crate root
