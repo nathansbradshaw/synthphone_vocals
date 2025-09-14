@@ -1,15 +1,11 @@
 use core::f32::consts::PI;
 
-use libm::{expf, fabsf, floorf, fmodf, logf, roundf};
-use microfft;
+use libm::{fabsf, floorf, fmodf, roundf};
 
 use crate::frequencies::find_nearest_note_frequency;
 
-//TODO this should be passed in
-const FFT_SIZE: usize = 1024;
-
 #[inline(always)]
-pub fn calculate_updates(
+pub fn calculate_updates<const N: usize>(
     index: usize,
     analysis_frequencies: &[f32],
     analysis_magnitudes: &[f32],
@@ -24,7 +20,7 @@ pub fn calculate_updates(
 
     let new_bin = floorf(index as f32 * pitch_shift + 0.5) as usize;
 
-    if new_bin < FFT_SIZE / 2 {
+    if new_bin < N / 2 {
         let updated_magnitude = transition_speed * analysis_magnitudes[new_bin]
             + (1.0 - transition_speed) * analysis_magnitudes[index];
         let updated_frequency = exact_frequency * pitch_shift;
@@ -99,43 +95,6 @@ pub fn normalize_sample(sample: f32, target_peak: f32) -> f32 {
     } else {
         sample
     }
-}
-
-#[inline(always)]
-pub fn cepstral_smoothing(input_magnitude: &[f32; FFT_SIZE]) -> [f32; FFT_SIZE / 2] {
-    // Step 1: Compute log magnitude for each FFT bin.
-    let mut log_spec: [microfft::Complex32; FFT_SIZE] =
-        [microfft::Complex32 { re: 0.0, im: 0.0 }; FFT_SIZE];
-    for i in 0..FFT_SIZE {
-        // Use libm::logf instead of .ln(), adding a small constant to avoid log(0)
-        log_spec[i].re = logf(input_magnitude[i].max(1e-12));
-    }
-
-    // Step 2: Compute the cepstrum by doing an inverse FFT on the log magnitude spectrum.
-    let mut cepstrum = log_spec; // Copy to a mutable array.
-    let _ = microfft::inverse::ifft_1024(&mut cepstrum);
-
-    // Step 3: Low-pass filter the cepstrum.
-    let cutoff = 20;
-    for i in cutoff..(FFT_SIZE - cutoff) {
-        cepstrum[i].re = 0.0;
-        cepstrum[i].im = 0.0;
-    }
-
-    // Step 4: Transform back to the frequency domain: FFT of the filtered cepstrum.
-    let mut filtered_input: [f32; FFT_SIZE] = [0.0; FFT_SIZE];
-    for i in 0..FFT_SIZE {
-        filtered_input[i] = cepstrum[i].re;
-    }
-    let smoothed_log_spec = microfft::real::rfft_1024(&mut filtered_input);
-
-    // Step 5: Exponentiate to recover the smoothed magnitude envelope.
-    let mut envelope = [0.0f32; FFT_SIZE / 2];
-    for i in 0..(FFT_SIZE / 2) {
-        envelope[i] = expf(smoothed_log_spec[i].re);
-    }
-
-    envelope
 }
 
 #[inline(always)]

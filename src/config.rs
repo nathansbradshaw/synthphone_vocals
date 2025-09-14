@@ -1,8 +1,8 @@
-//! Configuration types for the autotune library
+//! Configuration types for the vocal effects library
 
-/// Configuration for the autotune processor
+/// Configuration for the vocal effects processor
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct AutotuneConfig {
+pub struct VocalEffectsConfig {
     /// FFT size (must be power of 2, currently only 1024 supported)
     pub fft_size: usize,
     /// Hop size for overlap-add processing
@@ -19,7 +19,7 @@ pub struct AutotuneConfig {
     pub max_frequency: f32,
 }
 
-impl Default for AutotuneConfig {
+impl Default for VocalEffectsConfig {
     fn default() -> Self {
         Self {
             fft_size: 1024,
@@ -33,21 +33,21 @@ impl Default for AutotuneConfig {
     }
 }
 
-impl AutotuneConfig {
+impl VocalEffectsConfig {
     /// Create a new configuration with validation
     pub fn new(
         fft_size: usize,
         hop_size: usize,
         sample_rate: f32,
-    ) -> Result<Self, crate::AutotuneError> {
+    ) -> Result<Self, crate::VocalEffectsError> {
         if !fft_size.is_power_of_two() {
-            return Err(crate::AutotuneError::InvalidConfiguration);
+            return Err(crate::VocalEffectsError::InvalidConfiguration);
         }
         if hop_size >= fft_size {
-            return Err(crate::AutotuneError::InvalidConfiguration);
+            return Err(crate::VocalEffectsError::InvalidConfiguration);
         }
         if sample_rate <= 0.0 {
-            return Err(crate::AutotuneError::InvalidConfiguration);
+            return Err(crate::VocalEffectsError::InvalidConfiguration);
         }
 
         Ok(Self { fft_size, hop_size, sample_rate, ..Default::default() })

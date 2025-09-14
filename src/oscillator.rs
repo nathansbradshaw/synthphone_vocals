@@ -26,7 +26,7 @@ impl Oscillator {
         self.freq = freq;
     }
 
-    pub fn next(&mut self) -> f32 {
+    pub fn next_value(&mut self) -> f32 {
         let phase_inc = self.freq / self.sample_rate;
         self.phase += phase_inc;
         if self.phase >= 1.0 {

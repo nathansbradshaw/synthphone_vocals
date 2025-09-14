@@ -1,12 +1,13 @@
-//! FFT Configuration Macro for Dynamic Setup
+//! FFT Configuration Module for Dynamic Setup
 //!
-//! This module provides a macro to set up FFT-related constants dynamically
-//! based on the microfft library requirements. The macro ensures that:
+//! This module provides macros and utilities for setting up FFT-related constants
+//! and configurations dynamically based on the microfft library requirements.
+//! The module ensures that:
 //! - FFT sizes are powers of 2 (required by microfft's Radix-2 algorithm)
 //! - FFT sizes are within supported range (4 to 32768)
 //! - Related constants are calculated consistently
 //! - Proper microfft features are suggested for optimal memory usage
-
+#![allow(dead_code)]
 /// Macro to set up FFT configuration with dynamic sizing
 ///
 /// This macro generates all the necessary constants for FFT processing
@@ -28,18 +29,30 @@
 /// - `BIN_WIDTH`: Frequency resolution per bin
 ///
 /// # Example
-/// ```rust
+/// ```rust,no_run
 /// use synthphone_vocals::fft_config;
 ///
-/// // Basic usage with default parameters
-/// fft_config!(1024, 48000.0);
+/// // Basic usage with default parameters (in one scope)
+/// mod basic_config {
+///     use synthphone_vocals::fft_config;
+///     fft_config!(1024, 48000.0);
 ///
-/// // With custom hop ratio and buffer multiplier
-/// fft_config!(2048, 44100.0, hop_ratio = 0.125, buffer_multiplier = 8);
+///     pub fn print_config() {
+///         println!("FFT Size: {}", FFT_SIZE);
+///         println!("Buffer Size: {}", BUFFER_SIZE);
+///     }
+/// }
 ///
-/// // Now you can use SAMPLE_RATE, FFT_SIZE, etc.
-/// println!("FFT Size: {}", FFT_SIZE);
-/// println!("Buffer Size: {}", BUFFER_SIZE);
+/// // With custom parameters (in another scope)
+/// mod custom_config {
+///     use synthphone_vocals::fft_config;
+///     fft_config!(2048, 44100.0, hop_ratio = 0.125, buffer_multiplier = 8);
+///
+///     pub fn print_config() {
+///         println!("FFT Size: {}", FFT_SIZE);
+///         println!("Buffer Size: {}", BUFFER_SIZE);
+///     }
+/// }
 /// ```
 ///
 /// # Microfft Features
@@ -86,7 +99,7 @@ macro_rules! fft_config {
     ($fft_size:expr, $sample_rate:expr, hop_ratio = $hop_ratio:expr, buffer_multiplier = $buffer_multiplier:expr, block_size = $block_size:expr) => {
         // Compile-time validation that FFT_SIZE is a power of 2
         const _: () = {
-            if !$crate::fft_config::fft_config::is_power_of_two($fft_size) {
+            if !$crate::fft_config::is_power_of_two($fft_size) {
                 panic!("FFT_SIZE must be a power of 2");
             }
             if $fft_size < 4 || $fft_size > 32768 {
@@ -109,7 +122,7 @@ macro_rules! fft_config {
 
         // Compile-time suggestion for optimal microfft features
         const _FFT_FEATURE_SUGGESTION: &str =
-            $crate::fft_config::fft_config::suggest_microfft_feature($fft_size);
+            $crate::fft_config::suggest_microfft_feature($fft_size);
 
         // Optional: Print feature suggestion at compile time (commented out to avoid spam)
         // const _: () = {
@@ -128,74 +141,6 @@ macro_rules! fft_config {
             block_size = 2
         );
     };
-}
-
-/// Helper functions for compile-time validation and suggestions
-pub mod fft_config {
-    /// Check if a number is a power of 2 at compile time
-    pub const fn is_power_of_two(n: usize) -> bool {
-        n > 0 && (n & (n - 1)) == 0
-    }
-
-    /// Suggest the optimal microfft feature for a given FFT size
-    pub const fn suggest_microfft_feature(fft_size: usize) -> &'static str {
-        match fft_size {
-            1..=4 => "size-4",
-            5..=8 => "size-8",
-            9..=16 => "size-16",
-            17..=32 => "size-32",
-            33..=64 => "size-64",
-            65..=128 => "size-128",
-            129..=256 => "size-256",
-            257..=512 => "size-512",
-            513..=1024 => "size-1024",
-            1025..=2048 => "size-2048",
-            2049..=4096 => "size-4096", // This is the default
-            4097..=8192 => "size-8192",
-            8193..=16384 => "size-16384",
-            16385..=32768 => "size-32768",
-            _ => "size-32768", // Maximum supported
-        }
-    }
-
-    /// Get the next power of 2 greater than or equal to n
-    pub const fn next_power_of_two(mut n: usize) -> usize {
-        if n <= 1 {
-            return 1;
-        }
-        n -= 1;
-        n |= n >> 1;
-        n |= n >> 2;
-        n |= n >> 4;
-        n |= n >> 8;
-        n |= n >> 16;
-        #[cfg(target_pointer_width = "64")]
-        {
-            n |= n >> 32;
-        }
-        n + 1
-    }
-
-    /// Validate FFT configuration at runtime
-    pub fn validate_config(
-        fft_size: usize,
-        sample_rate: f32,
-        hop_ratio: f32,
-    ) -> Result<(), &'static str> {
-        if !is_power_of_two(fft_size) {
-            return Err("FFT size must be a power of 2");
-        }
-        if fft_size < 4 || fft_size > 32768 {
-            return Err("FFT size must be between 4 and 32768");
-        }
-        if sample_rate <= 0.0 {
-            return Err("Sample rate must be positive");
-        }
-        if hop_ratio <= 0.0 || hop_ratio > 1.0 {
-            return Err("Hop ratio must be between 0.0 and 1.0");
-        }
-        Ok(())
-    }
 }
 
 /// Convenience macro to create a configuration struct instead of constants
@@ -218,7 +163,7 @@ macro_rules! fft_config_struct {
             // Compile-time validation
             const _VALIDATE: () = {
                 assert!(
-                    $crate::fft_config::fft_config::is_power_of_two($fft_size),
+                    $crate::fft_config::is_power_of_two($fft_size),
                     "FFT_SIZE must be a power of 2"
                 );
                 assert!(
@@ -245,7 +190,7 @@ macro_rules! fft_config_struct {
             // Compile-time validation
             const _VALIDATE: () = {
                 assert!(
-                    $crate::fft_config::fft_config::is_power_of_two($fft_size),
+                    $crate::fft_config::is_power_of_two($fft_size),
                     "FFT_SIZE must be a power of 2"
                 );
                 assert!(
@@ -257,9 +202,144 @@ macro_rules! fft_config_struct {
     };
 }
 
+/// Check if a number is a power of 2 at compile time
+pub const fn is_power_of_two(n: usize) -> bool {
+    n > 0 && (n & (n - 1)) == 0
+}
+
+/// Suggest the optimal microfft feature for a given FFT size
+pub const fn suggest_microfft_feature(fft_size: usize) -> &'static str {
+    match fft_size {
+        1..=4 => "size-4",
+        5..=8 => "size-8",
+        9..=16 => "size-16",
+        17..=32 => "size-32",
+        33..=64 => "size-64",
+        65..=128 => "size-128",
+        129..=256 => "size-256",
+        257..=512 => "size-512",
+        513..=1024 => "size-1024",
+        1025..=2048 => "size-2048",
+        2049..=4096 => "size-4096", // This is the default
+        4097..=8192 => "size-8192",
+        8193..=16384 => "size-16384",
+        16385..=32768 => "size-32768",
+        _ => "size-32768", // Maximum supported
+    }
+}
+
+/// Get the next power of 2 greater than or equal to n
+pub const fn next_power_of_two(mut n: usize) -> usize {
+    if n <= 1 {
+        return 1;
+    }
+    n -= 1;
+    n |= n >> 1;
+    n |= n >> 2;
+    n |= n >> 4;
+    n |= n >> 8;
+    n |= n >> 16;
+    #[cfg(target_pointer_width = "64")]
+    {
+        n |= n >> 32;
+    }
+    n + 1
+}
+
+/// Validate FFT configuration at runtime
+pub fn validate_config(
+    fft_size: usize,
+    sample_rate: f32,
+    hop_ratio: f32,
+) -> Result<(), &'static str> {
+    if !is_power_of_two(fft_size) {
+        return Err("FFT size must be a power of 2");
+    }
+    if !(4..=32768).contains(&fft_size) {
+        return Err("FFT size must be between 4 and 32768");
+    }
+    if sample_rate <= 0.0 {
+        return Err("Sample rate must be positive");
+    }
+    if hop_ratio <= 0.0 || hop_ratio > 1.0 {
+        return Err("Hop ratio must be between 0.0 and 1.0");
+    }
+    Ok(())
+}
+
+/// Configuration struct for FFT parameters
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct FFTConfig {
+    pub fft_size: usize,
+    pub sample_rate: f32,
+    pub hop_ratio: f32,
+    pub buffer_multiplier: usize,
+    pub block_size: usize,
+}
+
+impl FFTConfig {
+    /// Create a new FFT configuration with validation
+    pub fn new(
+        fft_size: usize,
+        sample_rate: f32,
+        hop_ratio: f32,
+        buffer_multiplier: usize,
+        block_size: usize,
+    ) -> Result<Self, &'static str> {
+        validate_config(fft_size, sample_rate, hop_ratio)?;
+
+        if buffer_multiplier < 1 {
+            return Err("buffer_multiplier must be at least 1");
+        }
+
+        if block_size < 1 {
+            return Err("block_size must be at least 1");
+        }
+
+        Ok(Self { fft_size, sample_rate, hop_ratio, buffer_multiplier, block_size })
+    }
+
+    /// Create a default configuration for the given FFT size and sample rate
+    pub fn default_for(fft_size: usize, sample_rate: f32) -> Result<Self, &'static str> {
+        Self::new(fft_size, sample_rate, 0.25, 4, 2)
+    }
+
+    /// Get the buffer size for this configuration
+    pub const fn buffer_size(&self) -> usize {
+        self.fft_size * self.buffer_multiplier
+    }
+
+    /// Get the hop size for this configuration
+    pub fn hop_size(&self) -> usize {
+        (self.fft_size as f32 * self.hop_ratio) as usize
+    }
+
+    /// Get the frequency bin width for this configuration
+    pub fn bin_width(&self) -> f32 {
+        self.sample_rate / self.fft_size as f32
+    }
+
+    /// Get the suggested microfft feature for this configuration
+    pub const fn suggested_microfft_feature(&self) -> &'static str {
+        suggest_microfft_feature(self.fft_size)
+    }
+}
+
+impl Default for FFTConfig {
+    fn default() -> Self {
+        Self {
+            fft_size: 1024,
+            sample_rate: 48000.0,
+            hop_ratio: 0.25,
+            buffer_multiplier: 4,
+            block_size: 2,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use super::fft_config::*;
+    use super::*;
 
     #[test]
     fn test_is_power_of_two() {
@@ -308,7 +388,31 @@ mod tests {
     }
 
     #[test]
-    fn test_fft_config_macro() {
+    fn test_fft_config_struct() {
+        let config = FFTConfig::new(1024, 48000.0, 0.25, 4, 2).unwrap();
+
+        assert_eq!(config.fft_size, 1024);
+        assert_eq!(config.sample_rate, 48000.0);
+        assert_eq!(config.hop_ratio, 0.25);
+        assert_eq!(config.buffer_size(), 4096);
+        assert_eq!(config.hop_size(), 256);
+        assert_eq!(config.bin_width(), 46.875);
+        assert_eq!(config.suggested_microfft_feature(), "size-1024");
+    }
+
+    #[test]
+    fn test_fft_config_default_for() {
+        let config = FFTConfig::default_for(2048, 44100.0).unwrap();
+
+        assert_eq!(config.fft_size, 2048);
+        assert_eq!(config.sample_rate, 44100.0);
+        assert_eq!(config.hop_ratio, 0.25);
+        assert_eq!(config.buffer_multiplier, 4);
+        assert_eq!(config.block_size, 2);
+    }
+
+    #[test]
+    fn test_basic_fft_config_macro() {
         // Test basic macro usage
         mod test_basic {
             use crate::fft_config;
@@ -342,5 +446,3 @@ mod tests {
         assert_eq!(TestConfigWithHop::HOP_SIZE, 128); // 1024 * 0.125
     }
 }
-
-// Example usage documentation - moved to module level to avoid orphaned doc comment

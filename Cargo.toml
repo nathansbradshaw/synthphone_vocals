@@ -2,17 +2,17 @@
 name = "synthphone_vocals"
 version = "0.1.1"
 edition = "2024"
-description = "Real-time autotune library for embedded and desktop applications"
+description = "Real-time Vocal Effects and Pitch Correction library for embedded and desktop applications"
 license = "MIT"
-documentation = "https://docs.rs/autotune"
-keywords = ["audio", "dsp", "autotune", "embedded", "real-time"]
+keywords = ["audio", "dsp", "pitch-correction", "vocals", "embedded", "real-time"]
 categories = ["multimedia::audio", "embedded", "no-std"]
 readme = "README.md"
 
 [features]
 default = ["embedded"]
-std = []
-embedded = ["cortex-m"]
+std = ["dep:critical-section", "critical-section?/std"]
+embedded = []
+cortex-m = ["dep:cortex-m"]
 cepstral-smoothing = []
 formant-shifting = ["cepstral-smoothing"]
 debug-logging = []
@@ -20,6 +20,11 @@ debug-logging = []
 [dependencies]
 libm = "0.2.8"
 microfft = "0.6"
+
+[dependencies.critical-section]
+version = "1.1"
+default-features = false
+optional = true
 
 [dependencies.cortex-m]
 version = "0.7"
@@ -34,9 +39,6 @@ hound = "3.4"
 criterion = "0.5"
 approx = "0.5"
 
-# [[bench]]
-# name = "autotune_benchmark"
-# harness = false
 
 [package.metadata.docs.rs]
 all-features = true

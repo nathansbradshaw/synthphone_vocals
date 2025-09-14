@@ -1,4 +1,4 @@
-/// Musical settings for autotune processing
+/// Musical settings for vocal effects processing
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct MusicalSettings {
     /// Musical key (0-23, see keys module for mapping)
