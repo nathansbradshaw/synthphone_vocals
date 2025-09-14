@@ -1,13 +1,14 @@
 //! Test binary to demonstrate the process_vocal_effects_config macro functionality
 //!
 //! This binary shows how to use the new process_vocal_effects_config macro to create
-//! customized autotune functions with different FFT configurations.
+//! customized vocal effects functions with different FFT configurations.
 
 use synthphone_vocals::{
-    AutotuneConfig, MusicalSettings, process_vocal_effects_config, process_vocal_effects_configs,
+    MusicalSettings, VocalEffectsConfig, process_vocal_effects_config,
+    process_vocal_effects_configs,
 };
 
-// Generate individual autotune configurations for different use cases
+// Generate individual vocal effects configurations for different use cases
 process_vocal_effects_config!(process_vocal_effects_studio, 4096, 48000.0, hop_ratio = 0.125);
 process_vocal_effects_config!(process_vocal_effects_live, 512, 48000.0, hop_ratio = 0.5);
 process_vocal_effects_config!(process_vocal_effects_balanced, 2048, 48000.0, hop_ratio = 0.25);
@@ -99,13 +100,13 @@ fn calculate_rms<const N: usize>(buffer: &[f32; N]) -> f32 {
     (buffer.iter().map(|&x| x * x).sum::<f32>() / N as f32).sqrt()
 }
 
-/// Test a specific autotune configuration
+/// Test a specific vocal effects configuration
 fn test_configuration() {
-    println!("🧪 Testing Different Autotune Configurations");
-    println!("=============================================");
+    println!("🧪 Testing Different Vocal Effects Configurations");
+    println!("==================================================");
     println!();
 
-    let config = AutotuneConfig::default();
+    let config = VocalEffectsConfig::default();
     let mut settings = MusicalSettings::default();
     settings.note = 0; // Auto mode
     settings.key = 0; // C major
@@ -187,7 +188,7 @@ fn test_batch_configurations() {
     println!("==========================================");
     println!();
 
-    let config = AutotuneConfig::default();
+    let config = VocalEffectsConfig::default();
     let mut settings = MusicalSettings::default();
     settings.note = 0;
     settings.key = 0;
@@ -294,7 +295,7 @@ fn demonstrate_custom_config() {
     println!();
 
     // Test the custom configuration
-    let config = AutotuneConfig::default();
+    let config = VocalEffectsConfig::default();
     let mut settings = MusicalSettings::default();
     settings.note = 0;
     settings.formant = 1; // Enable formant preservation for voice
@@ -355,14 +356,14 @@ fn show_performance_analysis() {
 }
 
 fn main() {
-    println!("🎵 Autotune Configuration Macro Demonstration 🎵");
+    println!("🎵 vocal effects Configuration Macro Demonstration 🎵");
     println!("================================================");
     println!();
 
     println!(
         "This demonstration shows how to use the process_vocal_effects_config! macro to create"
     );
-    println!("customized autotune functions with different FFT configurations for");
+    println!("customized vocal effects functions with different FFT configurations for");
     println!("various use cases like real-time processing, studio quality, embedded systems, etc.");
     println!();
 

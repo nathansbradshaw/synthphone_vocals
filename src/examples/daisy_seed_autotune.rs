@@ -3,9 +3,6 @@
 
 use rtic::app;
 
-mod autotune;
-mod ring_buffer;
-
 #[app(
     device = stm32h7xx_hal::stm32,
     peripherals = true,
@@ -15,19 +12,18 @@ mod app {
 
     use libdaisy::logger;
     use libdaisy::{audio, system};
-    use libm::{expf, fabsf};
     use log::warn;
-    use synthphone_vocals::{AutotuneConfig, MusicalSettings};
 
-    use crate::autotune::{autotune_audio, write_synthesis_output};
-    use crate::ring_buffer::RingBuffer;
-    pub const SAMPLE_RATE: f32 = 48_014.312;
+    use synthphone_vocals::embedded::{normalize_sample, write_synthesis_output};
+    use synthphone_vocals::ring_buffer::RingBuffer;
+    use synthphone_vocals::{MusicalSettings, VocalEffectsConfig, process_vocal_effects_config};
+
     pub const FFT_SIZE: usize = 1024;
     pub const BUFFER_SIZE: usize = FFT_SIZE * 4;
     pub const HOP_SIZE: usize = 256;
     pub const BLOCK_SIZE: usize = 2;
-    pub const BIN_WIDTH: f32 = SAMPLE_RATE as f32 / FFT_SIZE as f32 * 2.0;
 
+    process_vocal_effects_config!(process_vocal_effects, 1024, 48_014.312, hop_ratio = 0.25);
     #[shared]
     struct Shared {
         in_ring: RingBuffer<BUFFER_SIZE>,
@@ -43,8 +39,6 @@ mod app {
         last_input_phases: [f32; FFT_SIZE],
         last_output_phases: [f32; FFT_SIZE],
         previous_pitch_shift_ratio: f32,
-        fft_overflow_count: u32,
-        audio_underrun_count: u32,
     }
 
     #[init]
@@ -60,7 +54,7 @@ mod app {
         (
             Shared {
                 in_ring: RingBuffer::new(),
-                out_ring: RingBuffer::with_offset((FFT_SIZE + (2 * HOP_SIZE)) as u32),
+                out_ring: RingBuffer::with_offset((FFT_SIZE + (2 * HOP_SIZE) * 4) as u32),
                 in_pointer_cached: 0,
             },
             Local {
@@ -70,8 +64,6 @@ mod app {
                 previous_pitch_shift_ratio: 1.0,
                 last_input_phases: [0.0; FFT_SIZE],
                 last_output_phases: [0.0; FFT_SIZE],
-                fft_overflow_count: 0,
-                audio_underrun_count: 0,
             },
             init::Monotonics(),
         )
@@ -86,7 +78,7 @@ mod app {
 
     #[task(
         binds = DMA1_STR1,
-        local = [audio, buffer, hop_counter, audio_underrun_count],
+        local = [audio, buffer, hop_counter],
         shared = [in_ring, out_ring, in_pointer_cached],
         priority = 8
     )]
@@ -117,10 +109,8 @@ mod app {
                         *cache = pointer;
                     });
 
-                    // Run FFT Process in new software task
-                    if process_autotune::spawn().is_err() {
+                    if process_pitch_shift::spawn().is_err() {
                         warn!("Could not spawn FFT task - processing overload");
-                        // Continue with unprocessed audio to prevent complete silence
                     }
                 }
 
@@ -140,23 +130,23 @@ mod app {
         shared = [in_ring, out_ring, in_pointer_cached],
         local = [last_input_phases,
         last_output_phases,
-        previous_pitch_shift_ratio,
-        fft_overflow_count],
+        previous_pitch_shift_ratio],
         priority = 6,
     )]
-    fn process_autotune(mut ctx: process_autotune::Context) {
-        let musical_settings = MusicalSettings::default();
-        let config = AutotuneConfig::default();
-        let mut unwrapped_buffer = [0.0; FFT_SIZE];
+    fn process_pitch_shift(mut ctx: process_pitch_shift::Context) {
+        let mut musical_settings = MusicalSettings::default();
+        musical_settings.octave = 2;
+        let config = VocalEffectsConfig::default();
+        let mut input_buffer = [0.0; FFT_SIZE];
 
         let write_idx = ctx.shared.in_pointer_cached.lock(|in_pointer| *in_pointer);
 
         ctx.shared
             .in_ring
-            .lock(|rb| rb.block_from::<FFT_SIZE>(write_idx, &mut unwrapped_buffer));
+            .lock(|rb| rb.block_from::<FFT_SIZE>(write_idx, &mut input_buffer));
 
-        let synthesis_output = autotune_audio(
-            &mut unwrapped_buffer,
+        let synthesis_output = process_vocal_effects(
+            &mut input_buffer,
             ctx.local.last_input_phases,
             ctx.local.last_output_phases,
             *ctx.local.previous_pitch_shift_ratio,
@@ -165,20 +155,7 @@ mod app {
         );
 
         ctx.shared.out_ring.lock(|output_ring| {
-            write_synthesis_output(&synthesis_output, output_ring);
+            write_synthesis_output::<FFT_SIZE, BUFFER_SIZE>(&synthesis_output, output_ring);
         });
-    }
-
-    #[inline(always)]
-    pub fn normalize_sample(sample: f32, target_peak: f32) -> f32 {
-        let abs_sample = fabsf(sample);
-        if abs_sample > target_peak {
-            // Soft limiting to prevent harsh clipping
-            let ratio = target_peak / abs_sample;
-            let soft_ratio = 1.0 - expf(-3.0 * ratio);
-            sample * soft_ratio
-        } else {
-            sample
-        }
     }
 }

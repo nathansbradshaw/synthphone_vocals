@@ -1,4 +1,4 @@
-//! Utility modules for autotune processing
+//! Utility modules for vocal effects processing
 
 pub mod math;
 

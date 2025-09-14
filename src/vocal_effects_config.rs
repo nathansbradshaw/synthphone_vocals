@@ -1,13 +1,13 @@
 //! Vocal Effects Configuration Module
 //!
 //! This module provides macros for generating specialized vocal effects processing functions
-//! with different FFT configurations. It handles the generation of autotune processing
+//! with different FFT configurations. It handles the generation of pitch correction processing
 //! functions optimized for different FFT sizes and parameters.
 
 /// Macro to generate configurable process_vocal_effects_audio functions
 ///
 /// This macro creates a version of the `process_vocal_effects_audio` function with custom FFT configuration.
-/// It generates a complete autotune implementation using the specified parameters.
+/// It generates a complete pitch correction implementation using the specified parameters.
 ///
 /// # Arguments
 /// - `$func_name`: Name of the generated function
@@ -24,17 +24,17 @@
 ///     last_input_phases: &mut [f32; FFT_SIZE],
 ///     last_output_phases: &mut [f32; FFT_SIZE],
 ///     previous_pitch_shift_ratio: f32,
-///     config: &AutotuneConfig,
+///     config: &VocalEffectsConfig,
 ///     settings: &MusicalSettings,
 /// ) -> [f32; FFT_SIZE]
 /// ```
 ///
 /// # Example
 /// ```rust,no_run
-/// // Generate real-time autotune function (low latency)
+/// // Generate real-time vocal effects function (low latency)
 /// synthphone_vocals::process_vocal_effects_config!(process_vocal_effects_realtime, 512, 48000.0, hop_ratio = 0.5);
 ///
-/// // Generate high-quality autotune function
+/// // Generate high-quality vocal effects function
 /// synthphone_vocals::process_vocal_effects_config!(process_vocal_effects_hifi, 2048, 48000.0, hop_ratio = 0.125);
 ///
 /// // Usage example
@@ -42,7 +42,7 @@
 ///     let mut buffer = [0.0f32; 512];
 ///     let mut input_phases = [0.0f32; 512];
 ///     let mut output_phases = [0.0f32; 512];
-///     let config = synthphone_vocals::AutotuneConfig::default();
+///     let config = synthphone_vocals::VocalEffectsConfig::default();
 ///     let settings = synthphone_vocals::MusicalSettings::default();
 ///
 ///     let result = process_vocal_effects_realtime(
@@ -158,7 +158,7 @@ macro_rules! process_vocal_effects_config {
     };
 }
 
-/// Implementation macro for 512-point FFT autotune function
+/// Implementation macro for 512-point FFT vocal effects function
 #[macro_export]
 macro_rules! process_vocal_effects_config_impl_512 {
     ($func_name:ident, $sample_rate:expr, $hop_ratio:expr) => {
@@ -167,7 +167,7 @@ macro_rules! process_vocal_effects_config_impl_512 {
             last_input_phases: &mut [f32; 512],
             last_output_phases: &mut [f32; 512],
             previous_pitch_shift_ratio: f32,
-            config: &$crate::AutotuneConfig,
+            config: &$crate::VocalEffectsConfig,
             settings: &$crate::MusicalSettings,
         ) -> [f32; 512] {
             $crate::process_vocal_effects::process_vocal_effects_512(
@@ -184,7 +184,7 @@ macro_rules! process_vocal_effects_config_impl_512 {
     };
 }
 
-/// Implementation macro for 1024-point FFT autotune function
+/// Implementation macro for 1024-point FFT vocal effects function
 #[macro_export]
 macro_rules! process_vocal_effects_config_impl_1024 {
     ($func_name:ident, $sample_rate:expr, $hop_ratio:expr) => {
@@ -193,7 +193,7 @@ macro_rules! process_vocal_effects_config_impl_1024 {
             last_input_phases: &mut [f32; 1024],
             last_output_phases: &mut [f32; 1024],
             previous_pitch_shift_ratio: f32,
-            config: &$crate::AutotuneConfig,
+            config: &$crate::VocalEffectsConfig,
             settings: &$crate::MusicalSettings,
         ) -> [f32; 1024] {
             $crate::process_vocal_effects::process_vocal_effects_1024(
@@ -210,7 +210,7 @@ macro_rules! process_vocal_effects_config_impl_1024 {
     };
 }
 
-/// Implementation macro for 2048-point FFT autotune function
+/// Implementation macro for 2048-point FFT vocal effects function
 #[macro_export]
 macro_rules! process_vocal_effects_config_impl_2048 {
     ($func_name:ident, $sample_rate:expr, $hop_ratio:expr) => {
@@ -219,7 +219,7 @@ macro_rules! process_vocal_effects_config_impl_2048 {
             last_input_phases: &mut [f32; 2048],
             last_output_phases: &mut [f32; 2048],
             previous_pitch_shift_ratio: f32,
-            config: &$crate::AutotuneConfig,
+            config: &$crate::VocalEffectsConfig,
             settings: &$crate::MusicalSettings,
         ) -> [f32; 2048] {
             $crate::process_vocal_effects::process_vocal_effects_2048(
@@ -236,7 +236,7 @@ macro_rules! process_vocal_effects_config_impl_2048 {
     };
 }
 
-/// Implementation macro for 4096-point FFT autotune function
+/// Implementation macro for 4096-point FFT vocal effects function
 #[macro_export]
 macro_rules! process_vocal_effects_config_impl_4096 {
     ($func_name:ident, $sample_rate:expr, $hop_ratio:expr) => {
@@ -245,7 +245,7 @@ macro_rules! process_vocal_effects_config_impl_4096 {
             last_input_phases: &mut [f32; 4096],
             last_output_phases: &mut [f32; 4096],
             previous_pitch_shift_ratio: f32,
-            config: &$crate::AutotuneConfig,
+            config: &$crate::VocalEffectsConfig,
             settings: &$crate::MusicalSettings,
         ) -> [f32; 4096] {
             $crate::process_vocal_effects::process_vocal_effects_4096(
@@ -262,14 +262,14 @@ macro_rules! process_vocal_effects_config_impl_4096 {
     };
 }
 
-/// Convenience macro to create multiple autotune configurations at once
+/// Convenience macro to create multiple vocal effects configurations at once
 ///
-/// This macro generates multiple autotune functions with different configurations
+/// This macro generates multiple vocal effects functions with different configurations
 /// in a single call, useful for applications that need different quality levels.
 ///
 /// # Example
 /// ```rust,no_run
-/// // Generate multiple autotune functions with different quality levels
+/// // Generate multiple vocal effects functions with different quality levels
 /// synthphone_vocals::process_vocal_effects_configs! {
 ///     fast => (process_vocal_effects_fast, 512, 48000.0, hop_ratio = 0.5),
 ///     balanced => (process_vocal_effects_balanced, 1024, 48000.0, hop_ratio = 0.25),
@@ -320,7 +320,7 @@ macro_rules! process_vocal_effects_configs {
 ///     let mut input_phases = [0.0f32; 1024];
 ///     let mut output_phases = [0.0f32; 1024];
 ///
-///     let config = synthphone_vocals::AutotuneConfig::default();
+///     let config = synthphone_vocals::VocalEffectsConfig::default();
 ///     let mut settings = synthphone_vocals::MusicalSettings::default();
 ///     settings.key = 0;  // C major
 ///     settings.note = 0; // Auto mode

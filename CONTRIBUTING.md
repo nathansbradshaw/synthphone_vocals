@@ -90,7 +90,7 @@ src/
 ├── config.rs              # Runtime configuration
 ├── fft_config.rs          # FFT setup and validation
 ├── vocal_effects_config.rs # Processing function generation
-├── process_vocal_effects.rs # Main processing engine
+├── process_vocal_effects.rs # Main pitch correction engine
 ├── process_frequencies.rs  # Frequency analysis
 ├── frequencies.rs         # Musical calculations  
 ├── keys.rs               # Musical theory
@@ -167,7 +167,7 @@ For audio quality testing:
 #[test]
 fn test_audio_quality() {
     let input = load_test_audio("test_vocals.wav");
-    let processed = process_with_autotune(input);
+    let processed = process_with_vocal_effects(input);
     
     // Check for artifacts
     assert!(measure_thd(&processed) < 0.01); // < 1% THD
@@ -185,7 +185,7 @@ fn test_audio_quality() {
 - **Safety**: Document any unsafe code or assumptions
 
 ```rust
-/// Processes audio with real-time autotune correction.
+/// Processes audio with real-time vocal pitch correction.
 ///
 /// This function performs pitch correction using a phase vocoder approach,
 /// with automatic pitch detection and correction to the nearest note in 
@@ -193,7 +193,7 @@ fn test_audio_quality() {
 ///
 /// # Parameters
 /// - `buffer`: Audio samples to process (modified in-place)
-/// - `config`: Autotune configuration parameters
+/// - `config`: Vocal effects configuration parameters
 /// - `settings`: Musical key and correction settings
 ///
 /// # Returns
@@ -206,14 +206,14 @@ fn test_audio_quality() {
 /// # Example
 /// ```rust
 /// let mut audio = [0.0f32; 1024];
-/// let config = AutotuneConfig::default();  
+/// let config = VocalEffectsConfig::default();  
 /// let settings = MusicalSettings { key: 0, ..Default::default() };
 ///
-/// let result = process_autotune(&mut audio, &config, &settings);
+/// let result = process_vocal_effects(&mut audio, &config, &settings);
 /// ```
-pub fn process_autotune(
+pub fn process_vocal_effects(
     buffer: &mut [f32],
-    config: &AutotuneConfig, 
+    config: &VocalEffectsConfig, 
     settings: &MusicalSettings
 ) -> ProcessResult {
     // Implementation...

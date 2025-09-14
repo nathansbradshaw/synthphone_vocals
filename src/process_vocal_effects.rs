@@ -1,9 +1,9 @@
-//! Core Autotune Implementation
+//! Core Vocal Effects Implementation
 //!
-//! This module contains shared autotune processing functions that use generics
+//! This module contains shared vocal effects processing functions that use generics
 //! to eliminate code duplication across different FFT size configurations.
 
-use crate::{AutotuneConfig, MusicalSettings};
+use crate::{MusicalSettings, VocalEffectsConfig};
 use core::f32::consts::PI;
 use libm::{atan2f, cosf, expf, fabsf, floorf, logf, sinf, sqrtf};
 
@@ -153,13 +153,13 @@ fn calculate_pitch_shift(
     pitch_shift_ratio
 }
 
-/// Generic autotune processing function that works with different FFT sizes
+/// Generic vocal effects processing function that works with different FFT sizes
 fn process_vocal_effects_generic<const N: usize, const HALF_N: usize, F>(
     unwrapped_buffer: &mut [f32; N],
     last_input_phases: &mut [f32; N],
     last_output_phases: &mut [f32; N],
     previous_pitch_shift_ratio: f32,
-    _config: &AutotuneConfig,
+    _config: &VocalEffectsConfig,
     settings: &MusicalSettings,
     sample_rate: f32,
     hop_ratio: f32,
@@ -300,13 +300,13 @@ where
     output_samples
 }
 
-/// Specialized autotune function for 512-point FFT
+/// Specialized vocal effects function for 512-point FFT
 pub fn process_vocal_effects_512(
     unwrapped_buffer: &mut [f32; 512],
     last_input_phases: &mut [f32; 512],
     last_output_phases: &mut [f32; 512],
     previous_pitch_shift_ratio: f32,
-    config: &AutotuneConfig,
+    config: &VocalEffectsConfig,
     settings: &MusicalSettings,
     sample_rate: f32,
     hop_ratio: f32,
@@ -323,13 +323,13 @@ pub fn process_vocal_effects_512(
     )
 }
 
-/// Specialized autotune function for 1024-point FFT
+/// Specialized vocal effects function for 1024-point FFT
 pub fn process_vocal_effects_1024(
     unwrapped_buffer: &mut [f32; 1024],
     last_input_phases: &mut [f32; 1024],
     last_output_phases: &mut [f32; 1024],
     previous_pitch_shift_ratio: f32,
-    config: &AutotuneConfig,
+    config: &VocalEffectsConfig,
     settings: &MusicalSettings,
     sample_rate: f32,
     hop_ratio: f32,
@@ -346,13 +346,13 @@ pub fn process_vocal_effects_1024(
     )
 }
 
-/// Specialized autotune function for 2048-point FFT
+/// Specialized vocal effects function for 2048-point FFT
 pub fn process_vocal_effects_2048(
     unwrapped_buffer: &mut [f32; 2048],
     last_input_phases: &mut [f32; 2048],
     last_output_phases: &mut [f32; 2048],
     previous_pitch_shift_ratio: f32,
-    config: &AutotuneConfig,
+    config: &VocalEffectsConfig,
     settings: &MusicalSettings,
     sample_rate: f32,
     hop_ratio: f32,
@@ -369,13 +369,13 @@ pub fn process_vocal_effects_2048(
     )
 }
 
-/// Specialized autotune function for 4096-point FFT
+/// Specialized vocal effects function for 4096-point FFT
 pub fn process_vocal_effects_4096(
     unwrapped_buffer: &mut [f32; 4096],
     last_input_phases: &mut [f32; 4096],
     last_output_phases: &mut [f32; 4096],
     previous_pitch_shift_ratio: f32,
-    config: &AutotuneConfig,
+    config: &VocalEffectsConfig,
     settings: &MusicalSettings,
     sample_rate: f32,
     hop_ratio: f32,

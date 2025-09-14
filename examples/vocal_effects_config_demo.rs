@@ -1,23 +1,24 @@
 //! Example: Using the process_vocal_effects_config macro
 //!
 //! This example demonstrates how to use the `process_vocal_effects_config!` macro to create
-//! custom autotune functions with different FFT configurations for various use cases.
+//! custom vocal effects functions with different FFT configurations for various use cases.
 
 use synthphone_vocals::{
-    AutotuneConfig, MusicalSettings, process_vocal_effects_config, process_vocal_effects_configs,
+    MusicalSettings, VocalEffectsConfig, process_vocal_effects_config,
+    process_vocal_effects_configs,
 };
 
-// Generate individual autotune configurations for different use cases
+// Generate individual vocal effects configurations for different use cases
 
-// Real-time autotune with minimal latency (10.7ms @ 48kHz)
+// Real-time vocal effects with minimal latency (10.7ms @ 48kHz)
 // Good for live performance where latency is critical
 process_vocal_effects_config!(process_vocal_effects_realtime, 512, 48000.0, hop_ratio = 0.5);
 
-// Balanced autotune for general use (21.3ms @ 48kHz)
+// Balanced vocal effects for general use (21.3ms @ 48kHz)
 // Good compromise between quality and performance
 process_vocal_effects_config!(process_vocal_effects_balanced, 1024, 48000.0, hop_ratio = 0.25);
 
-// High-quality autotune for studio work (42.7ms @ 48kHz)
+// High-quality vocal effects for studio work (42.7ms @ 48kHz)
 // Better frequency resolution and quality
 process_vocal_effects_config!(process_vocal_effects_studio, 2048, 48000.0, hop_ratio = 0.125);
 
@@ -33,23 +34,23 @@ process_vocal_effects_configs! {
 }
 
 fn main() {
-    println!("Autotune Configuration Examples");
+    println!("vocal effects Configuration Examples");
     println!("===============================");
 
     // Example 1: Real-time processing
-    println!("\n1. Real-time autotune (512 FFT, 50% hop):");
+    println!("\n1. Real-time vocal effects (512 FFT, 50% hop):");
     demo_process_vocal_effects_function("Real-time", process_vocal_effects_realtime);
 
     // Example 2: Balanced processing
-    println!("\n2. Balanced autotune (1024 FFT, 25% hop):");
+    println!("\n2. Balanced vocal effects (1024 FFT, 25% hop):");
     demo_process_vocal_effects_function("Balanced", process_vocal_effects_balanced);
 
     // Example 3: Studio quality
-    println!("\n3. Studio autotune (2048 FFT, 12.5% hop):");
+    println!("\n3. Studio vocal effects (2048 FFT, 12.5% hop):");
     demo_process_vocal_effects_function("Studio", process_vocal_effects_studio);
 
     // Example 4: High-fidelity processing
-    println!("\n4. Hi-fi autotune (4096 FFT, 6.25% hop):");
+    println!("\n4. Hi-fi vocal effects (4096 FFT, 6.25% hop):");
     demo_process_vocal_effects_function("Hi-fi", process_vocal_effects_hifi);
 
     // Example 5: Using generated batch configurations
@@ -66,7 +67,7 @@ fn main() {
     print_configuration_guide();
 }
 
-/// Demonstrates using a specific autotune function
+/// Demonstrates using a specific vocal effects function
 fn demo_process_vocal_effects_function<const N: usize>(
     name: &str,
     process_vocal_effects_func: fn(
@@ -74,7 +75,7 @@ fn demo_process_vocal_effects_function<const N: usize>(
         &mut [f32; N],
         &mut [f32; N],
         f32,
-        &AutotuneConfig,
+        &VocalEffectsConfig,
         &MusicalSettings,
     ) -> [f32; N],
 ) {
@@ -90,7 +91,7 @@ fn demo_process_vocal_effects_function<const N: usize>(
     }
 
     // Create configuration
-    let config = AutotuneConfig::default();
+    let config = VocalEffectsConfig::default();
     let mut settings = MusicalSettings::default();
     settings.key = 0; // C major
     settings.note = 0; // Auto mode
@@ -135,7 +136,7 @@ fn demo_different_settings() {
         *sample = (2.0 * std::f32::consts::PI * 440.0 * t).sin() * 0.1;
     }
 
-    let config = AutotuneConfig::default();
+    let config = VocalEffectsConfig::default();
 
     // Auto mode (snap to nearest note in key)
     let mut settings_auto = MusicalSettings::default();
@@ -213,7 +214,7 @@ mod tests {
     fn test_generated_functions_work() {
         let mut buffer_512 = [0.1f32; 512];
         let mut phases_512 = [0.0f32; 512];
-        let config = AutotuneConfig::default();
+        let config = VocalEffectsConfig::default();
         let settings = MusicalSettings::default();
 
         let result = process_vocal_effects_realtime(

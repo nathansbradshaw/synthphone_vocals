@@ -1,12 +1,12 @@
-//! Basic Autotune Example
+//! Basic Vocal Effects Example
 //!
 //! This example demonstrates the basic usage of the synthphone_vocals library
-//! for real-time autotune processing. It shows how to configure and use the
+//! for real-time vocal processing. It shows how to configure and use the
 //! vocal effects processing functions.
 
-use synthphone_vocals::{AutotuneConfig, MusicalSettings, process_vocal_effects_config};
+use synthphone_vocals::{MusicalSettings, VocalEffectsConfig, process_vocal_effects_config};
 
-// Generate an optimized autotune function for real-time processing
+// Generate an optimized vocal effects function for real-time processing
 process_vocal_effects_config!(
     process_vocals_realtime, // Function name
     1024,                    // FFT size (latency vs quality trade-off)
@@ -15,11 +15,11 @@ process_vocal_effects_config!(
 );
 
 fn main() {
-    println!("🎵 Basic Autotune Example");
-    println!("========================");
+    println!("🎵 Basic Vocal Effects Example");
+    println!("===============================");
 
     // Initialize configuration
-    let config = AutotuneConfig::default();
+    let config = VocalEffectsConfig::default();
     let mut settings = MusicalSettings::default();
 
     // Configure for C major scale
@@ -51,7 +51,7 @@ fn main() {
         // In a real application, this would come from your audio input
         fill_with_test_signal(&mut audio_buffer, frame);
 
-        // Process the audio buffer with autotune
+        // Process the audio buffer with vocal effects
         let processed = process_vocals_realtime(
             &mut audio_buffer,
             &mut input_phases,
@@ -107,7 +107,7 @@ fn demonstrate_different_keys() {
     println!("🎹 Musical Key Demonstrations");
     println!("============================");
 
-    let config = AutotuneConfig::default();
+    let config = VocalEffectsConfig::default();
     let mut settings = MusicalSettings::default();
 
     let keys = [(0, "C Major"), (7, "G Major"), (12, "A Minor"), (19, "E Minor")];
@@ -117,7 +117,7 @@ fn demonstrate_different_keys() {
         println!("Key: {} (index: {})", key_name, key_index);
 
         // You could process different audio samples here to show
-        // how the autotune behavior changes with different keys
+        // how the vocal effects behavior changes with different keys
     }
     println!();
 }
@@ -154,7 +154,7 @@ mod tests {
 
     #[test]
     fn test_basic_processing() {
-        let config = AutotuneConfig::default();
+        let config = VocalEffectsConfig::default();
         let settings = MusicalSettings::default();
 
         let mut audio_buffer = [0.0f32; 1024];
@@ -196,7 +196,7 @@ mod tests {
 
     #[test]
     fn test_different_keys() {
-        let config = AutotuneConfig::default();
+        let config = VocalEffectsConfig::default();
         let mut settings = MusicalSettings::default();
 
         // Test that different keys don't cause panics

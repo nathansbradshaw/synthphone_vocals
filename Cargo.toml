@@ -2,9 +2,9 @@
 name = "synthphone_vocals"
 version = "0.1.1"
 edition = "2024"
-description = "Real-time Vocal Effects library for embedded and desktop applications"
+description = "Real-time Vocal Effects and Pitch Correction library for embedded and desktop applications"
 license = "MIT"
-keywords = ["audio", "dsp", "autotune", "vocals", "embedded", "real-time"]
+keywords = ["audio", "dsp", "pitch-correction", "vocals", "embedded", "real-time"]
 categories = ["multimedia::audio", "embedded", "no-std"]
 readme = "README.md"
 

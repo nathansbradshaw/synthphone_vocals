@@ -32,8 +32,8 @@ pub mod normal_phase_advance;
 pub mod oscillator;
 
 // Re-export main API
-pub use config::AutotuneConfig;
-pub use error::AutotuneError;
+pub use config::VocalEffectsConfig;
+pub use error::VocalEffectsError;
 pub use state::MusicalSettings;
 
 // Re-export commonly used functions
