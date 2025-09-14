@@ -80,10 +80,10 @@ const CONFIGS: &[ConfigInfo] = &[
 /// Helper function to create test audio with harmonics
 fn create_test_audio<const N: usize>(frequency: f32, sample_rate: f32) -> [f32; N] {
     let mut audio = [0.0f32; N];
-    for i in 0..N {
+    for (i, value) in audio.iter_mut().enumerate().take(N) {
         let t = i as f32 / sample_rate;
         // Create a signal with fundamental and harmonics
-        audio[i] = 0.6 * (2.0 * std::f32::consts::PI * frequency * t).sin()
+        *value = 0.6 * (2.0 * std::f32::consts::PI * frequency * t).sin()
             + 0.3 * (2.0 * std::f32::consts::PI * frequency * 2.0 * t).sin()
             + 0.1 * (2.0 * std::f32::consts::PI * frequency * 3.0 * t).sin();
     }
@@ -107,10 +107,7 @@ fn test_configuration() {
     println!();
 
     let config = VocalEffectsConfig::default();
-    let mut settings = MusicalSettings::default();
-    settings.note = 0; // Auto mode
-    settings.key = 0; // C major
-    settings.octave = 4;
+    let settings = MusicalSettings { note: 0, key: 0, octave: 4, ..Default::default() };
 
     // Test studio configuration (4096 FFT)
     {
@@ -189,10 +186,7 @@ fn test_batch_configurations() {
     println!();
 
     let config = VocalEffectsConfig::default();
-    let mut settings = MusicalSettings::default();
-    settings.note = 0;
-    settings.key = 0;
-    settings.octave = 4;
+    let settings = MusicalSettings { note: 0, key: 0, octave: 4, ..Default::default() };
 
     // Test draft quality
     {
@@ -296,9 +290,7 @@ fn demonstrate_custom_config() {
 
     // Test the custom configuration
     let config = VocalEffectsConfig::default();
-    let mut settings = MusicalSettings::default();
-    settings.note = 0;
-    settings.formant = 1; // Enable formant preservation for voice
+    let settings = MusicalSettings { note: 0, formant: 1, ..Default::default() };
 
     let mut voice_audio = create_test_audio::<2048>(196.0, 48000.0); // G3 (typical male voice)
     let (mut input_phases, mut output_phases) = create_phase_buffers::<2048>();

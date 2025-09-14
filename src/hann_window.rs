@@ -1,3 +1,5 @@
+use core::f32::consts::PI;
+
 pub const FFT_SIZE: usize = 1024;
 
 /// Const function to generate Hann window values
@@ -26,11 +28,11 @@ const fn hann_window_value(n: usize, total_size: usize) -> f32 {
 
     // Use the standard Hann window formula: 0.5 * (1 - cos(2πn/(N-1)))
     // Calculate 2πn/(N-1)
-    let angle = 2.0 * 3.14159265358979323846 * n_f / size_minus_1;
+    let angle = 2.0 * PI * n_f / size_minus_1;
 
     // For better accuracy with const functions, use a high-precision cosine approximation
     // Reduce angle to [0, 2π] range first
-    let twopi = 2.0 * 3.14159265358979323846;
+    let twopi = 2.0 * PI;
     let reduced_angle = angle % twopi;
 
     // Use Taylor series with more terms for better accuracy
@@ -78,6 +80,12 @@ pub const fn create_hann_window<const N: usize>() -> [f32; N] {
 /// Struct to hold window data with const generic size
 pub struct HannWindow<const N: usize> {
     data: [f32; N],
+}
+
+impl<const N: usize> Default for HannWindow<N> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<const N: usize> HannWindow<N> {

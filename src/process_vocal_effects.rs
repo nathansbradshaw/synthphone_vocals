@@ -154,6 +154,7 @@ fn calculate_pitch_shift(
 }
 
 /// Generic vocal effects processing function that works with different FFT sizes
+#[allow(clippy::too_many_arguments)]
 fn process_vocal_effects_generic<const N: usize, const HALF_N: usize, F>(
     unwrapped_buffer: &mut [f32; N],
     last_input_phases: &mut [f32; N],
@@ -301,6 +302,7 @@ where
 }
 
 /// Specialized vocal effects function for 512-point FFT
+#[allow(clippy::too_many_arguments)]
 pub fn process_vocal_effects_512(
     unwrapped_buffer: &mut [f32; 512],
     last_input_phases: &mut [f32; 512],
@@ -324,6 +326,7 @@ pub fn process_vocal_effects_512(
 }
 
 /// Specialized vocal effects function for 1024-point FFT
+#[allow(clippy::too_many_arguments)]
 pub fn process_vocal_effects_1024(
     unwrapped_buffer: &mut [f32; 1024],
     last_input_phases: &mut [f32; 1024],
@@ -347,6 +350,7 @@ pub fn process_vocal_effects_1024(
 }
 
 /// Specialized vocal effects function for 2048-point FFT
+#[allow(clippy::too_many_arguments)]
 pub fn process_vocal_effects_2048(
     unwrapped_buffer: &mut [f32; 2048],
     last_input_phases: &mut [f32; 2048],
@@ -370,6 +374,7 @@ pub fn process_vocal_effects_2048(
 }
 
 /// Specialized vocal effects function for 4096-point FFT
+#[allow(clippy::too_many_arguments)]
 pub fn process_vocal_effects_4096(
     unwrapped_buffer: &mut [f32; 4096],
     last_input_phases: &mut [f32; 4096],

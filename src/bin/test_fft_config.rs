@@ -82,7 +82,7 @@ fn print_struct_configs() {
 }
 
 fn demonstrate_validation() {
-    use synthphone_vocals::fft_config;
+    
 
     println!("=== Configuration Validation ===");
 
@@ -107,7 +107,7 @@ fn demonstrate_validation() {
 }
 
 fn suggest_microfft_features() {
-    use synthphone_vocals::fft_config;
+    
 
     println!("=== Microfft Feature Suggestions ===");
     println!("Add these features to your Cargo.toml for optimal memory usage:");

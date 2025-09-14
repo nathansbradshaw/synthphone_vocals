@@ -51,6 +51,12 @@ pub struct RingBuffer<const N: usize> {
 // Safety – single producer / single consumer.
 unsafe impl<const N: usize> Sync for RingBuffer<N> {}
 
+impl<const N: usize> Default for RingBuffer<N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<const N: usize> RingBuffer<N> {
     /// Creates a new ring buffer with the write pointer offset by the specified amount.
     ///
@@ -269,9 +275,9 @@ impl<const N: usize> RingBuffer<N> {
     pub fn latest_block<const LEN: usize>(&self, dest: &mut [f32; LEN]) {
         cortex_m::interrupt::free(|_| {
             let w = self.write.load(Ordering::Acquire);
-            for i in 0..LEN {
+            for (i, value) in dest.iter_mut().enumerate().take(LEN) {
                 let idx = w.wrapping_sub(LEN as u32).wrapping_add(i as u32);
-                dest[i] = unsafe { (*self.buf.get())[idx as usize & (N - 1)] };
+                *value = unsafe { (*self.buf.get())[idx as usize & (N - 1)] };
             }
         });
     }
@@ -302,9 +308,9 @@ impl<const N: usize> RingBuffer<N> {
     /// buffer.block_from(write_pos, &mut block); // Copy 32 samples ending at write_pos
     /// ```
     pub fn block_from<const LEN: usize>(&self, write_idx: u32, dst: &mut [f32; LEN]) {
-        for i in 0..LEN {
+        for (i, item) in dst.iter_mut().enumerate().take(LEN) {
             let idx = write_idx.wrapping_sub(LEN as u32).wrapping_add(i as u32);
-            dst[i] = unsafe { (*self.buf.get())[idx as usize & (N - 1)] };
+            *item = unsafe { (*self.buf.get())[idx as usize & (N - 1)] };
         }
     }
 }

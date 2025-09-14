@@ -16,8 +16,8 @@ pub fn write_synthesis_output<const N: usize, const BUFFER_SIZE: usize>(
     output_ring: &RingBuffer<BUFFER_SIZE>,
 ) {
     // Add samples to output buffer using overlap-add (accumulation)
-    for i in 0..N {
-        output_ring.add_at_offset(i as u32, output_samples[i]);
+    for (i, sample) in output_samples.iter().enumerate().take(N) {
+        output_ring.add_at_offset(i as u32, *sample);
     }
 }
 

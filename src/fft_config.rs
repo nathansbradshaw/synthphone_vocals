@@ -255,7 +255,7 @@ pub fn validate_config(
     if !is_power_of_two(fft_size) {
         return Err("FFT size must be a power of 2");
     }
-    if fft_size < 4 || fft_size > 32768 {
+    if !(4..=32768).contains(&fft_size) {
         return Err("FFT size must be between 4 and 32768");
     }
     if sample_rate <= 0.0 {
