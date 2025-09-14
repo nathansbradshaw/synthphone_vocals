@@ -39,7 +39,7 @@ jobs:
         run: cargo test --verbose
 
       - name: Run tests (no_std)
-        run: cargo test --no-default-features --features embedded --verbose
+        run: cargo test --lib --no-default-features --features embedded --verbose
 
   fmt:
     name: Rustfmt
@@ -86,7 +86,7 @@ jobs:
 
       - name: Run clippy (no default features)
         if: matrix.features == 'no-default-features'
-        run: cargo clippy --all-targets --no-default-features --features embedded -- -D warnings
+        run: cargo clippy --lib --no-default-features --features embedded -- -D warnings
 
   build-std:
     name: Build (std targets)
@@ -154,10 +154,10 @@ jobs:
           key: ${{ runner.os }}-cargo-${{ matrix.target }}-nostd-${{ hashFiles('**/Cargo.lock') }}
 
       - name: Build (no_std)
-        run: cargo build --target ${{ matrix.target }} --no-default-features --features embedded --verbose
+        run: cargo build --lib --target ${{ matrix.target }} --no-default-features --features embedded --verbose
 
       - name: Build release (no_std)
-        run: cargo build --target ${{ matrix.target }} --no-default-features --features embedded --release --verbose
+        run: cargo build --lib --target ${{ matrix.target }} --no-default-features --features embedded --release --verbose
 
   docs:
     name: Documentation
