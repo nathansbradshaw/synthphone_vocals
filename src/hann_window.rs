@@ -146,6 +146,7 @@ pub fn get_static_hann_window(size: usize) -> Option<&'static [f32]> {
 }
 
 #[cfg(test)]
+#[allow(clippy::assertions_on_constants)]
 mod tests {
     use super::*;
 

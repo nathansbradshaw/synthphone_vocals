@@ -365,26 +365,5 @@ macro_rules! process_vocal_effects_configs {
 /// | 1024, 0.25 | Low | Low | Good | Real-time apps |
 /// | 2048, 0.125 | Medium | Medium | High | Studio recording |
 /// | 4096, 0.0625 | High | High | Excellent | Post-processing |
-
 #[cfg(test)]
-mod tests {
-    #[test]
-    fn test_process_vocal_effects_config_macros() {
-        // Test that macro compilation succeeds
-        // Note: Actual function calls are not possible in this test context
-        // due to macro expansion happening at module level
-        assert!(true, "Macro compilation test passed");
-    }
-
-    #[test]
-    fn test_process_vocal_effects_configs_convenience_macro() {
-        // Test that convenience macro compilation succeeds
-        assert!(true, "Convenience macro compilation test passed");
-    }
-
-    #[test]
-    fn test_process_vocal_effects_with_different_settings() {
-        // Test that settings-based functions compile correctly
-        assert!(true, "Settings test compilation passed");
-    }
-}
+mod tests {}

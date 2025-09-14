@@ -20,12 +20,8 @@ fn main() {
 
     // Initialize configuration
     let config = VocalEffectsConfig::default();
-    let mut settings = MusicalSettings::default();
-
-    // Configure for C major scale
-    settings.key = 0; // C major
-    settings.note = 0; // Auto-detect mode (corrects to nearest note in key)
-    settings.formant = 1; // Preserve formants for natural sound
+    let settings =
+        synthphone_vocals::MusicalSettings { key: 0, note: 0, formant: 1, ..Default::default() };
 
     println!("Configuration:");
     println!("  Key: C Major");
@@ -107,7 +103,7 @@ fn demonstrate_different_keys() {
     println!("🎹 Musical Key Demonstrations");
     println!("============================");
 
-    let config = VocalEffectsConfig::default();
+    let _config = VocalEffectsConfig::default();
     let mut settings = MusicalSettings::default();
 
     let keys = [(0, "C Major"), (7, "G Major"), (12, "A Minor"), (19, "E Minor")];

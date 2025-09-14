@@ -7,6 +7,7 @@ use core::{
     cell::UnsafeCell,
     sync::atomic::{AtomicU32, Ordering},
 };
+use critical_section;
 
 /// A lock-free ring buffer for single-producer, single-consumer (SPSC) scenarios.
 ///
@@ -273,7 +274,7 @@ impl<const N: usize> RingBuffer<N> {
     /// buffer.latest_block(&mut block); // Copy latest 32 samples
     /// ```
     pub fn latest_block<const LEN: usize>(&self, dest: &mut [f32; LEN]) {
-        cortex_m::interrupt::free(|_| {
+        critical_section::with(|_| {
             let w = self.write.load(Ordering::Acquire);
             for (i, value) in dest.iter_mut().enumerate().take(LEN) {
                 let idx = w.wrapping_sub(LEN as u32).wrapping_add(i as u32);

@@ -68,6 +68,7 @@ fn main() {
 }
 
 /// Demonstrates using a specific vocal effects function
+#[allow(clippy::type_complexity)]
 fn demo_process_vocal_effects_function<const N: usize>(
     name: &str,
     process_vocal_effects_func: fn(
@@ -92,10 +93,8 @@ fn demo_process_vocal_effects_function<const N: usize>(
 
     // Create configuration
     let config = VocalEffectsConfig::default();
-    let mut settings = MusicalSettings::default();
-    settings.key = 0; // C major
-    settings.note = 0; // Auto mode
-    settings.formant = 0; // No formant processing for this demo
+    let settings =
+        synthphone_vocals::MusicalSettings { key: 0, note: 0, formant: 0, ..Default::default() };
 
     // Process audio
     let result = process_vocal_effects_func(
@@ -139,10 +138,8 @@ fn demo_different_settings() {
     let config = VocalEffectsConfig::default();
 
     // Auto mode (snap to nearest note in key)
-    let mut settings_auto = MusicalSettings::default();
-    settings_auto.key = 0; // C major
-    settings_auto.note = 0; // Auto mode
-    settings_auto.formant = 0;
+    let settings_auto =
+        synthphone_vocals::MusicalSettings { key: 0, note: 0, formant: 0, ..Default::default() };
 
     let result_auto = process_vocal_effects_balanced(
         &mut buffer.clone(),
@@ -154,11 +151,8 @@ fn demo_different_settings() {
     );
 
     // Manual mode (specific note)
-    let mut settings_manual = MusicalSettings::default();
-    settings_manual.key = 0; // C major
-    settings_manual.note = 1; // C note
-    settings_manual.octave = 4; // 4th octave
-    settings_manual.formant = 1; // Lower formants
+    let settings_manual =
+        synthphone_vocals::MusicalSettings { key: 0, note: 1, octave: 4, formant: 1 };
 
     let result_manual = process_vocal_effects_balanced(
         &mut buffer,

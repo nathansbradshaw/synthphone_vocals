@@ -7,7 +7,7 @@
 //! - FFT sizes are within supported range (4 to 32768)
 //! - Related constants are calculated consistently
 //! - Proper microfft features are suggested for optimal memory usage
-
+#![allow(dead_code)]
 /// Macro to set up FFT configuration with dynamic sizing
 ///
 /// This macro generates all the necessary constants for FFT processing
