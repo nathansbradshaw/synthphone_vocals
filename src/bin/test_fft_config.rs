@@ -82,8 +82,6 @@ fn print_struct_configs() {
 }
 
 fn demonstrate_validation() {
-    
-
     println!("=== Configuration Validation ===");
 
     let test_cases = [
@@ -107,8 +105,6 @@ fn demonstrate_validation() {
 }
 
 fn suggest_microfft_features() {
-    
-
     println!("=== Microfft Feature Suggestions ===");
     println!("Add these features to your Cargo.toml for optimal memory usage:");
     println!();
