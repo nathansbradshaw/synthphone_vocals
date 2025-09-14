@@ -92,7 +92,7 @@ pub const KEYS: [(KeyScale, &str); 24] = [
 ];
 
 /// Returns the note name from a given `scale` based on `note` (1..9).
-/// Wraps around at 8 and 9, which effectively map back to scale[0] or scale[1].
+/// Wraps around at 8 and 9, which effectively map back to scale.0[0] or scale.0[1].
 pub fn get_note_name(note: i32, scale: KeyScale) -> &'static str {
     match note {
         1 => scale.0[0],

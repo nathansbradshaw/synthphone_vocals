@@ -7,7 +7,6 @@ use core::{
     cell::UnsafeCell,
     sync::atomic::{AtomicU32, Ordering},
 };
-use critical_section;
 
 /// A lock-free ring buffer for single-producer, single-consumer (SPSC) scenarios.
 ///
@@ -196,7 +195,39 @@ impl<const N: usize> RingBuffer<N> {
     /// ```
     pub fn advance_write(&self, n: u32) {
         use core::sync::atomic::Ordering;
-        self.write.fetch_add(n, Ordering::Relaxed);
+
+        #[cfg(feature = "std")]
+        {
+            // Use critical section for std targets
+            critical_section::with(|_| {
+                let current = self.write.load(Ordering::Relaxed);
+                let new = current.wrapping_add(n);
+                self.write.store(new, Ordering::Relaxed);
+            });
+        }
+
+        #[cfg(not(feature = "std"))]
+        {
+            // For embedded targets, disable interrupts if available, otherwise rely on single-producer guarantee
+            #[cfg(feature = "cortex-m")]
+            {
+                cortex_m::interrupt::free(|_| {
+                    let current = self.write.load(Ordering::Relaxed);
+                    let new = current.wrapping_add(n);
+                    self.write.store(new, Ordering::Relaxed);
+                });
+            }
+
+            #[cfg(not(feature = "cortex-m"))]
+            {
+                // For other embedded targets without atomic RMW, use compiler barriers
+                core::sync::atomic::compiler_fence(Ordering::Acquire);
+                let current = self.write.load(Ordering::Relaxed);
+                let new = current.wrapping_add(n);
+                self.write.store(new, Ordering::Relaxed);
+                core::sync::atomic::compiler_fence(Ordering::Release);
+            }
+        }
     }
 
     /// Adds a value to the buffer at a position relative to the current read pointer.
@@ -274,13 +305,27 @@ impl<const N: usize> RingBuffer<N> {
     /// buffer.latest_block(&mut block); // Copy latest 32 samples
     /// ```
     pub fn latest_block<const LEN: usize>(&self, dest: &mut [f32; LEN]) {
-        critical_section::with(|_| {
+        #[cfg(feature = "std")]
+        {
+            critical_section::with(|_| {
+                let w = self.write.load(Ordering::Acquire);
+                for (i, value) in dest.iter_mut().enumerate().take(LEN) {
+                    let idx = w.wrapping_sub(LEN as u32).wrapping_add(i as u32);
+                    *value = unsafe { (*self.buf.get())[idx as usize & (N - 1)] };
+                }
+            });
+        }
+
+        #[cfg(not(feature = "std"))]
+        {
+            // For embedded targets without std, use atomic snapshot approach
+            // This is safe for single-producer/single-consumer usage
             let w = self.write.load(Ordering::Acquire);
             for (i, value) in dest.iter_mut().enumerate().take(LEN) {
                 let idx = w.wrapping_sub(LEN as u32).wrapping_add(i as u32);
                 *value = unsafe { (*self.buf.get())[idx as usize & (N - 1)] };
             }
-        });
+        }
     }
 
     /// Copies a block of samples ending at the specified write index.
@@ -312,6 +357,170 @@ impl<const N: usize> RingBuffer<N> {
         for (i, item) in dst.iter_mut().enumerate().take(LEN) {
             let idx = write_idx.wrapping_sub(LEN as u32).wrapping_add(i as u32);
             *item = unsafe { (*self.buf.get())[idx as usize & (N - 1)] };
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_ring_buffer_basic_operations() {
+        let buffer: RingBuffer<1024> = RingBuffer::new();
+
+        // Test initial state
+        assert_eq!(buffer.available_samples(), 0);
+        assert_eq!(buffer.write_index(), 0);
+
+        // Test push and pop
+        buffer.push(0.5);
+        buffer.push(0.25);
+        assert_eq!(buffer.available_samples(), 2);
+
+        let sample1 = buffer.pop();
+        assert!((sample1 - 0.5).abs() < f32::EPSILON);
+        assert_eq!(buffer.available_samples(), 1);
+
+        let sample2 = buffer.pop();
+        assert!((sample2 - 0.25).abs() < f32::EPSILON);
+        assert_eq!(buffer.available_samples(), 0);
+    }
+
+    #[test]
+    fn test_ring_buffer_with_offset() {
+        let buffer: RingBuffer<1024> = RingBuffer::with_offset(512);
+        assert_eq!(buffer.write_index(), 512);
+        assert_eq!(buffer.available_samples(), 512);
+    }
+
+    #[test]
+    fn test_advance_write() {
+        let buffer: RingBuffer<1024> = RingBuffer::new();
+        buffer.advance_write(10);
+        assert_eq!(buffer.write_index(), 10);
+        assert_eq!(buffer.available_samples(), 10);
+    }
+
+    #[test]
+    fn test_add_at_offset() {
+        let buffer: RingBuffer<1024> = RingBuffer::new();
+
+        // Push some initial data
+        buffer.push(1.0);
+        buffer.push(2.0);
+
+        // Add value at offset 0 (current read position)
+        buffer.add_at_offset(0, 0.5);
+
+        // Pop and check the modified value
+        let sample = buffer.pop();
+        assert!((sample - 1.5).abs() < f32::EPSILON); // 1.0 + 0.5
+    }
+
+    #[test]
+    fn test_latest_block() {
+        let buffer: RingBuffer<1024> = RingBuffer::new();
+
+        // Push some test data
+        for i in 0..8 {
+            buffer.push(i as f32);
+        }
+
+        // Get latest 4 samples
+        let mut block = [0.0f32; 4];
+        buffer.latest_block(&mut block);
+
+        // Should contain samples [4.0, 5.0, 6.0, 7.0]
+        assert!((block[0] - 4.0).abs() < f32::EPSILON);
+        assert!((block[1] - 5.0).abs() < f32::EPSILON);
+        assert!((block[2] - 6.0).abs() < f32::EPSILON);
+        assert!((block[3] - 7.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_block_from() {
+        let buffer: RingBuffer<1024> = RingBuffer::new();
+
+        // Push some test data
+        for i in 0..8 {
+            buffer.push(i as f32);
+        }
+
+        let write_idx = buffer.write_index();
+        let mut block = [0.0f32; 4];
+        buffer.block_from(write_idx, &mut block);
+
+        // Should contain the last 4 samples written
+        assert!((block[0] - 4.0).abs() < f32::EPSILON);
+        assert!((block[1] - 5.0).abs() < f32::EPSILON);
+        assert!((block[2] - 6.0).abs() < f32::EPSILON);
+        assert!((block[3] - 7.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn test_ring_buffer_wrap_around() {
+        let buffer: RingBuffer<4> = RingBuffer::new(); // Small buffer for testing wrap
+
+        // Fill buffer beyond capacity - this will overwrite old data
+        for i in 0..8 {
+            buffer.push(i as f32);
+        }
+
+        // Buffer tracks 8 samples written, but only has space for 4
+        assert_eq!(buffer.available_samples(), 8);
+
+        // Due to wrapping, the buffer storage contains the last 4 values: [4, 5, 6, 7]
+        // But we can pop 8 times due to the write/read pointer difference
+        // First 4 pops get the stored values: 4, 5, 6, 7
+        for i in 0..4 {
+            let sample = buffer.pop();
+            assert!(
+                (sample - (i + 4) as f32).abs() < f32::EPSILON,
+                "Expected {}, got {}",
+                (i + 4) as f32,
+                sample
+            );
+        }
+
+        // Next 4 pops get zeros (from previously cleared slots)
+        for _ in 0..4 {
+            let sample = buffer.pop();
+            assert!((sample - 0.0).abs() < f32::EPSILON);
+        }
+
+        // After popping all, buffer should be empty
+        assert_eq!(buffer.available_samples(), 0);
+    }
+
+    #[test]
+    fn test_ring_buffer_overwrite_behavior() {
+        let buffer: RingBuffer<4> = RingBuffer::new(); // Small buffer
+
+        // Fill buffer to capacity
+        for i in 0..4 {
+            buffer.push(i as f32);
+        }
+        assert_eq!(buffer.available_samples(), 4);
+
+        // Pop all values - should get 0, 1, 2, 3
+        for i in 0..4 {
+            let sample = buffer.pop();
+            assert!((sample - i as f32).abs() < f32::EPSILON);
+        }
+
+        // Buffer is now empty
+        assert_eq!(buffer.available_samples(), 0);
+
+        // Fill again with new values
+        for i in 10..14 {
+            buffer.push(i as f32);
+        }
+
+        // Should get the new values: 10, 11, 12, 13
+        for i in 10..14 {
+            let sample = buffer.pop();
+            assert!((sample - i as f32).abs() < f32::EPSILON);
         }
     }
 }

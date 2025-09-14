@@ -10,7 +10,7 @@ readme = "README.md"
 
 [features]
 default = ["embedded"]
-std = []
+std = ["dep:critical-section"]
 embedded = []
 cortex-m = ["dep:cortex-m"]
 cepstral-smoothing = []
@@ -20,7 +20,11 @@ debug-logging = []
 [dependencies]
 libm = "0.2.8"
 microfft = "0.6"
-critical-section = "1.1"
+
+[dependencies.critical-section]
+version = "1.1"
+features = ["std"]
+optional = true
 
 [dependencies.cortex-m]
 version = "0.7"
