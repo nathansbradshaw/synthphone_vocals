@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
 
 env:
   CARGO_TERM_COLOR: always
@@ -18,43 +18,43 @@ jobs:
       matrix:
         rust: [stable, beta, nightly]
     steps:
-    - name: Checkout sources
-      uses: actions/checkout@v4
+      - name: Checkout sources
+        uses: actions/checkout@v4
 
-    - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@master
-      with:
-        toolchain: ${{ matrix.rust }}
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.rust }}
 
-    - name: Cache cargo registry
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-        key: ${{ runner.os }}-cargo-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Run tests
-      run: cargo test --verbose
+      - name: Run tests
+        run: cargo test --verbose
 
-    - name: Run tests (no_std)
-      run: cargo test --no-default-features --verbose
+      - name: Run tests (no_std)
+        run: cargo test --no-default-features --features embedded --verbose
 
   fmt:
     name: Rustfmt
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout sources
-      uses: actions/checkout@v4
+      - name: Checkout sources
+        uses: actions/checkout@v4
 
-    - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        components: rustfmt
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
 
-    - name: Run rustfmt
-      run: cargo fmt --all -- --check
+      - name: Run rustfmt
+        run: cargo fmt --all -- --check
 
   clippy:
     name: Clippy
@@ -63,121 +63,118 @@ jobs:
       matrix:
         features: [default, no-default-features]
     steps:
-    - name: Checkout sources
-      uses: actions/checkout@v4
+      - name: Checkout sources
+        uses: actions/checkout@v4
 
-    - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        components: clippy
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
 
-    - name: Cache cargo registry
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-        key: ${{ runner.os }}-cargo-clippy-${{ matrix.features }}-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-clippy-${{ matrix.features }}-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Run clippy (default features)
-      if: matrix.features == 'default'
-      run: cargo clippy --all-targets -- -D warnings
+      - name: Run clippy (default features)
+        if: matrix.features == 'default'
+        run: cargo clippy --all-targets -- -D warnings
 
-    - name: Run clippy (no default features)
-      if: matrix.features == 'no-default-features'
-      run: cargo clippy --all-targets --no-default-features -- -D warnings
+      - name: Run clippy (no default features)
+        if: matrix.features == 'no-default-features'
+        run: cargo clippy --all-targets --no-default-features --features embedded -- -D warnings
 
   build:
     name: Build
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        target: [
-          x86_64-unknown-linux-gnu,
-          thumbv7em-none-eabihf,
-          thumbv6m-none-eabi
-        ]
+        target:
+          [x86_64-unknown-linux-gnu, thumbv7em-none-eabihf, thumbv6m-none-eabi]
         features: [default, no-default-features]
     steps:
-    - name: Checkout sources
-      uses: actions/checkout@v4
+      - name: Checkout sources
+        uses: actions/checkout@v4
 
-    - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        targets: ${{ matrix.target }}
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
 
-    - name: Cache cargo registry
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-        key: ${{ runner.os }}-cargo-${{ matrix.target }}-${{ matrix.features }}-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ matrix.target }}-${{ matrix.features }}-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Build (default features)
-      if: matrix.features == 'default'
-      run: cargo build --target ${{ matrix.target }} --verbose
+      - name: Build (default features)
+        if: matrix.features == 'default'
+        run: cargo build --target ${{ matrix.target }} --verbose
 
-    - name: Build (no default features)
-      if: matrix.features == 'no-default-features'
-      run: cargo build --target ${{ matrix.target }} --no-default-features --verbose
+      - name: Build (no default features)
+        if: matrix.features == 'no-default-features'
+        run: cargo build --target ${{ matrix.target }} --no-default-features --features embedded --verbose
 
-    - name: Build release (default features)
-      if: matrix.features == 'default'
-      run: cargo build --target ${{ matrix.target }} --release --verbose
+      - name: Build release (default features)
+        if: matrix.features == 'default'
+        run: cargo build --target ${{ matrix.target }} --release --verbose
 
-    - name: Build release (no default features)
-      if: matrix.features == 'no-default-features'
-      run: cargo build --target ${{ matrix.target }} --no-default-features --release --verbose
+      - name: Build release (no default features)
+        if: matrix.features == 'no-default-features'
+        run: cargo build --target ${{ matrix.target }} --no-default-features --features embedded --release --verbose
 
   docs:
     name: Documentation
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout sources
-      uses: actions/checkout@v4
+      - name: Checkout sources
+        uses: actions/checkout@v4
 
-    - name: Install Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
 
-    - name: Cache cargo registry
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-        key: ${{ runner.os }}-cargo-docs-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-docs-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Build documentation
-      run: cargo doc --no-deps --verbose
-      env:
-        RUSTDOCFLAGS: -D warnings
+      - name: Build documentation
+        run: cargo doc --no-deps --verbose
+        env:
+          RUSTDOCFLAGS: -D warnings
 
   check-msrv:
     name: Check Minimum Supported Rust Version
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout sources
-      uses: actions/checkout@v4
+      - name: Checkout sources
+        uses: actions/checkout@v4
 
-    - name: Install Rust toolchain (MSRV)
-      uses: dtolnay/rust-toolchain@1.70.0
+      - name: Install Rust toolchain (MSRV)
+        uses: dtolnay/rust-toolchain@1.87.0
 
-    - name: Cache cargo registry
-      uses: actions/cache@v4
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          target
-        key: ${{ runner.os }}-cargo-msrv-${{ hashFiles('**/Cargo.lock') }}
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-msrv-${{ hashFiles('**/Cargo.lock') }}
 
-    - name: Check with MSRV
-      run: cargo check --verbose
+      - name: Check with MSRV
+        run: cargo check --verbose
 
-    - name: Test with MSRV
-      run: cargo test --verbose
+      - name: Test with MSRV
+        run: cargo test --verbose
