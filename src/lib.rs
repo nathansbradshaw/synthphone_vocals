@@ -6,13 +6,14 @@ pub mod config;
 pub mod error;
 pub mod fft_config;
 pub mod state;
+pub mod vocal_effects_config;
 
 // Audio processing modules
 pub mod frequencies;
 pub mod hann_window;
 pub mod keys;
 pub mod process_frequencies;
-pub mod process_vocal_effects_core;
+pub mod process_vocal_effects;
 
 // Buffer management
 pub mod ring_buffer;

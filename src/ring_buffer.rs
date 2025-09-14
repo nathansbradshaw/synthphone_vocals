@@ -28,7 +28,8 @@ use core::{
 /// # Examples
 ///
 /// ```rust
-/// let buffer: RingBuffer<1024> = RingBuffer::new();
+/// use synthphone_vocals::ring_buffer::RingBuffer;
+/// let mut buffer: RingBuffer<1024> = RingBuffer::new();
 ///
 /// // Producer thread
 /// buffer.push(0.5);
@@ -60,11 +61,11 @@ impl<const N: usize> RingBuffer<N> {
     ///
     /// * `offset` - Initial write index offset
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```rust
-    /// // Create buffer with 128 samples of "headroom"
-    /// let buffer: RingBuffer<1024> = RingBuffer::with_offset(128);
+    /// use synthphone_vocals::ring_buffer::RingBuffer;
+    /// let buffer: RingBuffer<1024> = RingBuffer::with_offset(512);
     /// ```
     pub fn with_offset(offset: u32) -> Self {
         Self {
@@ -78,10 +79,11 @@ impl<const N: usize> RingBuffer<N> {
     ///
     /// The buffer is initialized with all zeros and ready for immediate use.
     ///
-    /// # Examples
+    /// ## Example
     ///
     /// ```rust
-    /// const BUFFER: RingBuffer<1024> = RingBuffer::new();
+    /// use synthphone_vocals::ring_buffer::RingBuffer;
+    /// let buffer: RingBuffer<1024> = RingBuffer::new();
     /// ```
     pub const fn new() -> Self {
         Self {
@@ -102,12 +104,14 @@ impl<const N: usize> RingBuffer<N> {
     ///
     /// * `v` - The sample value to write
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```rust
-    /// let buffer: RingBuffer<1024> = RingBuffer::new();
-    /// buffer.push(0.75);
-    /// buffer.push(-0.25);
+    /// use synthphone_vocals::ring_buffer::RingBuffer;
+    /// let mut buffer: RingBuffer<1024> = RingBuffer::new();
+    /// buffer.push(0.5);
+    /// buffer.push(0.25);
+    /// assert_eq!(buffer.available_samples(), 2);
     /// ```
     pub fn push(&self, v: f32) {
         let w = self.write.load(Ordering::Relaxed);
@@ -127,12 +131,13 @@ impl<const N: usize> RingBuffer<N> {
     ///
     /// The sample value that was read from the buffer.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```rust
-    /// let buffer: RingBuffer<1024> = RingBuffer::new();
-    /// buffer.push(0.5);
-    /// let sample = buffer.pop(); // Returns 0.5
+    /// use synthphone_vocals::ring_buffer::RingBuffer;
+    /// let mut buffer: RingBuffer<1024> = RingBuffer::new();
+    /// buffer.push(0.75);
+    /// let sample = buffer.pop(); // Returns 0.75
     /// ```
     pub fn pop(&self) -> f32 {
         let r = self.read.load(Ordering::Relaxed);
@@ -155,12 +160,13 @@ impl<const N: usize> RingBuffer<N> {
     ///
     /// The current write position as a monotonically increasing counter.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```rust
-    /// let buffer: RingBuffer<1024> = RingBuffer::new();
-    /// buffer.push(0.5);
-    /// assert_eq!(buffer.write_index(), 1);
+    /// use synthphone_vocals::ring_buffer::RingBuffer;
+    /// let mut buffer: RingBuffer<1024> = RingBuffer::new();
+    /// buffer.advance_write(10);
+    /// assert_eq!(buffer.write_index(), 10);
     /// ```
     pub fn write_index(&self) -> u32 {
         self.write.load(core::sync::atomic::Ordering::Relaxed)
@@ -175,11 +181,11 @@ impl<const N: usize> RingBuffer<N> {
     ///
     /// * `n` - Number of positions to advance the write pointer
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```rust
-    /// let buffer: RingBuffer<1024> = RingBuffer::new();
-    /// buffer.advance_write(64); // Reserve 64 samples
+    /// use synthphone_vocals::ring_buffer::RingBuffer;
+    /// let mut buffer: RingBuffer<1024> = RingBuffer::new();
     /// ```
     pub fn advance_write(&self, n: u32) {
         use core::sync::atomic::Ordering;
@@ -196,11 +202,12 @@ impl<const N: usize> RingBuffer<N> {
     /// * `offset` - Offset from the current read position (0 = current read position)
     /// * `val` - Value to add to the existing sample at that position
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```rust
-    /// let buffer: RingBuffer<1024> = RingBuffer::new();
-    /// buffer.add_at_offset(10, 0.5); // Add 0.5 to sample 10 positions ahead
+    /// use synthphone_vocals::ring_buffer::RingBuffer;
+    /// let mut buffer: RingBuffer<1024> = RingBuffer::new();
+    /// buffer.add_at_offset(512, 1.0); // Add 1.0 at position 512 samples ago
     /// ```
     pub fn add_at_offset(&self, offset: u32, val: f32) {
         let idx = self.read.load(Ordering::Relaxed).wrapping_add(offset);
@@ -219,10 +226,11 @@ impl<const N: usize> RingBuffer<N> {
     ///
     /// The number of samples ready to be consumed.
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```rust
-    /// let buffer: RingBuffer<1024> = RingBuffer::new();
+    /// use synthphone_vocals::ring_buffer::RingBuffer;
+    /// let mut buffer: RingBuffer<1024> = RingBuffer::new();
     /// buffer.push(0.5);
     /// buffer.push(0.25);
     /// assert_eq!(buffer.available_samples(), 2);
@@ -250,13 +258,13 @@ impl<const N: usize> RingBuffer<N> {
     ///
     /// * `dest` - Destination array to copy the samples into
     ///
-    /// # Examples
+    /// # Example
     ///
-    /// ```rust
+    /// ```rust,no_run
+    /// use synthphone_vocals::ring_buffer::RingBuffer;
     /// let buffer: RingBuffer<1024> = RingBuffer::new();
-    /// // ... write some samples ...
-    /// let mut block = [0.0f32; 64];
-    /// buffer.latest_block(&mut block); // Copy last 64 samples
+    /// let mut block = [0.0f32; 32];
+    /// buffer.latest_block(&mut block); // Copy latest 32 samples
     /// ```
     pub fn latest_block<const LEN: usize>(&self, dest: &mut [f32; LEN]) {
         cortex_m::interrupt::free(|_| {
@@ -283,10 +291,11 @@ impl<const N: usize> RingBuffer<N> {
     /// * `write_idx` - The write index position where the block should end
     /// * `dst` - Destination array to copy the samples into
     ///
-    /// # Examples
+    /// # Example
     ///
     /// ```rust
-    /// let buffer: RingBuffer<1024> = RingBuffer::new();
+    /// use synthphone_vocals::ring_buffer::RingBuffer;
+    /// let mut buffer: RingBuffer<1024> = RingBuffer::new();
     /// // ... write some samples ...
     /// let write_pos = buffer.write_index();
     /// let mut block = [0.0f32; 32];

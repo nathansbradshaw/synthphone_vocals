@@ -82,7 +82,7 @@ fn print_struct_configs() {
 }
 
 fn demonstrate_validation() {
-    use synthphone_vocals::fft_config::fft_config;
+    use synthphone_vocals::fft_config;
 
     println!("=== Configuration Validation ===");
 
@@ -98,7 +98,7 @@ fn demonstrate_validation() {
     ];
 
     for (fft_size, sample_rate, hop_ratio, description) in test_cases {
-        match fft_config::validate_config(fft_size, sample_rate, hop_ratio) {
+        match synthphone_vocals::fft_config::validate_config(fft_size, sample_rate, hop_ratio) {
             Ok(()) => println!("✓ {}", description),
             Err(e) => println!("✗ {}: {}", description, e),
         }
@@ -107,7 +107,7 @@ fn demonstrate_validation() {
 }
 
 fn suggest_microfft_features() {
-    use synthphone_vocals::fft_config::fft_config;
+    use synthphone_vocals::fft_config;
 
     println!("=== Microfft Feature Suggestions ===");
     println!("Add these features to your Cargo.toml for optimal memory usage:");
@@ -116,7 +116,7 @@ fn suggest_microfft_features() {
     let fft_sizes = [64, 256, 512, 1024, 2048, 4096, 8192];
 
     for &size in &fft_sizes {
-        let feature = fft_config::suggest_microfft_feature(size);
+        let feature = synthphone_vocals::fft_config::suggest_microfft_feature(size);
         println!("FFT Size {:>4}: features = [\"{}\"]", size, feature);
     }
 
