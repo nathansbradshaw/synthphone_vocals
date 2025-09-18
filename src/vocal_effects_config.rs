@@ -303,6 +303,335 @@ macro_rules! process_vocal_effects_configs {
     };
 }
 
+/// Macro to generate configurable process_vocode functions
+///
+/// This macro creates a version of the vocode processing function with custom FFT configuration.
+/// Vocode applies the spectral envelope of the input signal to a carrier signal.
+///
+/// # Arguments
+/// - `$func_name`: Name of the generated function
+/// - `$fft_size`: FFT size (must be power of 2, between 512-4096)
+/// - `$sample_rate`: Sample rate in Hz
+/// - `hop_ratio`: Optional hop size as fraction of FFT size (default: 0.25)
+///
+/// # Generated Function Signature
+/// ```rust,ignore
+/// pub fn $func_name(
+///     input_buffer: &mut [f32; FFT_SIZE],
+///     carrier_buffer: &mut [f32; FFT_SIZE],
+///     last_input_phases: &mut [f32; FFT_SIZE],
+///     last_output_phases: &mut [f32; FFT_SIZE],
+///     config: &VocalEffectsConfig,
+///     settings: &MusicalSettings,
+/// ) -> [f32; FFT_SIZE]
+/// ```
+#[macro_export]
+macro_rules! process_vocode_config {
+    // Basic version - 512
+    ($func_name:ident, 512, $sample_rate:expr) => {
+        $crate::process_vocode_config_impl_512!($func_name, $sample_rate, 0.25);
+    };
+    // Basic version - 1024
+    ($func_name:ident, 1024, $sample_rate:expr) => {
+        $crate::process_vocode_config_impl_1024!($func_name, $sample_rate, 0.25);
+    };
+    // Basic version - 2048
+    ($func_name:ident, 2048, $sample_rate:expr) => {
+        $crate::process_vocode_config_impl_2048!($func_name, $sample_rate, 0.25);
+    };
+    // Basic version - 4096
+    ($func_name:ident, 4096, $sample_rate:expr) => {
+        $crate::process_vocode_config_impl_4096!($func_name, $sample_rate, 0.25);
+    };
+
+    // Version with hop ratio - 512
+    ($func_name:ident, 512, $sample_rate:expr, hop_ratio = $hop_ratio:expr) => {
+        $crate::process_vocode_config_impl_512!($func_name, $sample_rate, $hop_ratio);
+    };
+    // Version with hop ratio - 1024
+    ($func_name:ident, 1024, $sample_rate:expr, hop_ratio = $hop_ratio:expr) => {
+        $crate::process_vocode_config_impl_1024!($func_name, $sample_rate, $hop_ratio);
+    };
+    // Version with hop ratio - 2048
+    ($func_name:ident, 2048, $sample_rate:expr, hop_ratio = $hop_ratio:expr) => {
+        $crate::process_vocode_config_impl_2048!($func_name, $sample_rate, $hop_ratio);
+    };
+    // Version with hop ratio - 4096
+    ($func_name:ident, 4096, $sample_rate:expr, hop_ratio = $hop_ratio:expr) => {
+        $crate::process_vocode_config_impl_4096!($func_name, $sample_rate, $hop_ratio);
+    };
+}
+
+/// Macro to generate configurable process_dry functions
+///
+/// This macro creates a version of the dry processing function with custom FFT configuration.
+/// Dry mode provides pitch shifting and formant control without pitch correction.
+///
+/// # Arguments
+/// - `$func_name`: Name of the generated function
+/// - `$fft_size`: FFT size (must be power of 2, between 512-4096)
+/// - `$sample_rate`: Sample rate in Hz
+/// - `hop_ratio`: Optional hop size as fraction of FFT size (default: 0.25)
+///
+/// # Generated Function Signature
+/// ```rust,ignore
+/// pub fn $func_name(
+///     unwrapped_buffer: &mut [f32; FFT_SIZE],
+///     synth_buffer: Option<&mut [f32; FFT_SIZE]>,
+///     last_input_phases: &mut [f32; FFT_SIZE],
+///     last_output_phases: &mut [f32; FFT_SIZE],
+///     previous_pitch_shift_ratio: f32,
+///     config: &VocalEffectsConfig,
+///     settings: &MusicalSettings,
+/// ) -> [f32; FFT_SIZE]
+/// ```
+#[macro_export]
+macro_rules! process_dry_config {
+    // Basic version - 512
+    ($func_name:ident, 512, $sample_rate:expr) => {
+        $crate::process_dry_config_impl_512!($func_name, $sample_rate, 0.25);
+    };
+    // Basic version - 1024
+    ($func_name:ident, 1024, $sample_rate:expr) => {
+        $crate::process_dry_config_impl_1024!($func_name, $sample_rate, 0.25);
+    };
+    // Basic version - 2048
+    ($func_name:ident, 2048, $sample_rate:expr) => {
+        $crate::process_dry_config_impl_2048!($func_name, $sample_rate, 0.25);
+    };
+    // Basic version - 4096
+    ($func_name:ident, 4096, $sample_rate:expr) => {
+        $crate::process_dry_config_impl_4096!($func_name, $sample_rate, 0.25);
+    };
+
+    // Version with hop ratio - 512
+    ($func_name:ident, 512, $sample_rate:expr, hop_ratio = $hop_ratio:expr) => {
+        $crate::process_dry_config_impl_512!($func_name, $sample_rate, $hop_ratio);
+    };
+    // Version with hop ratio - 1024
+    ($func_name:ident, 1024, $sample_rate:expr, hop_ratio = $hop_ratio:expr) => {
+        $crate::process_dry_config_impl_1024!($func_name, $sample_rate, $hop_ratio);
+    };
+    // Version with hop ratio - 2048
+    ($func_name:ident, 2048, $sample_rate:expr, hop_ratio = $hop_ratio:expr) => {
+        $crate::process_dry_config_impl_2048!($func_name, $sample_rate, $hop_ratio);
+    };
+    // Version with hop ratio - 4096
+    ($func_name:ident, 4096, $sample_rate:expr, hop_ratio = $hop_ratio:expr) => {
+        $crate::process_dry_config_impl_4096!($func_name, $sample_rate, $hop_ratio);
+    };
+}
+
+/// Implementation macros for vocode functions
+#[macro_export]
+macro_rules! process_vocode_config_impl_512 {
+    ($func_name:ident, $sample_rate:expr, $hop_ratio:expr) => {
+        pub fn $func_name(
+            input_buffer: &mut [f32; 512],
+            carrier_buffer: &mut [f32; 512],
+            last_input_phases: &mut [f32; 512],
+            last_output_phases: &mut [f32; 512],
+            config: &$crate::VocalEffectsConfig,
+            settings: &$crate::MusicalSettings,
+        ) -> [f32; 512] {
+            $crate::process_vocal_effects::process_vocode_512(
+                input_buffer,
+                carrier_buffer,
+                last_input_phases,
+                last_output_phases,
+                config,
+                settings,
+                $sample_rate,
+                $hop_ratio,
+            )
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! process_vocode_config_impl_1024 {
+    ($func_name:ident, $sample_rate:expr, $hop_ratio:expr) => {
+        pub fn $func_name(
+            input_buffer: &mut [f32; 1024],
+            carrier_buffer: &mut [f32; 1024],
+            last_input_phases: &mut [f32; 1024],
+            last_output_phases: &mut [f32; 1024],
+            config: &$crate::VocalEffectsConfig,
+            settings: &$crate::MusicalSettings,
+        ) -> [f32; 1024] {
+            $crate::process_vocal_effects::process_vocode_1024(
+                input_buffer,
+                carrier_buffer,
+                last_input_phases,
+                last_output_phases,
+                config,
+                settings,
+                $sample_rate,
+                $hop_ratio,
+            )
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! process_vocode_config_impl_2048 {
+    ($func_name:ident, $sample_rate:expr, $hop_ratio:expr) => {
+        pub fn $func_name(
+            input_buffer: &mut [f32; 2048],
+            carrier_buffer: &mut [f32; 2048],
+            last_input_phases: &mut [f32; 2048],
+            last_output_phases: &mut [f32; 2048],
+            config: &$crate::VocalEffectsConfig,
+            settings: &$crate::MusicalSettings,
+        ) -> [f32; 2048] {
+            $crate::process_vocal_effects::process_vocode_2048(
+                input_buffer,
+                carrier_buffer,
+                last_input_phases,
+                last_output_phases,
+                config,
+                settings,
+                $sample_rate,
+                $hop_ratio,
+            )
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! process_vocode_config_impl_4096 {
+    ($func_name:ident, $sample_rate:expr, $hop_ratio:expr) => {
+        pub fn $func_name(
+            input_buffer: &mut [f32; 4096],
+            carrier_buffer: &mut [f32; 4096],
+            last_input_phases: &mut [f32; 4096],
+            last_output_phases: &mut [f32; 4096],
+            config: &$crate::VocalEffectsConfig,
+            settings: &$crate::MusicalSettings,
+        ) -> [f32; 4096] {
+            $crate::process_vocal_effects::process_vocode_4096(
+                input_buffer,
+                carrier_buffer,
+                last_input_phases,
+                last_output_phases,
+                config,
+                settings,
+                $sample_rate,
+                $hop_ratio,
+            )
+        }
+    };
+}
+
+/// Implementation macros for dry functions
+#[macro_export]
+macro_rules! process_dry_config_impl_512 {
+    ($func_name:ident, $sample_rate:expr, $hop_ratio:expr) => {
+        pub fn $func_name(
+            unwrapped_buffer: &mut [f32; 512],
+            synth_buffer: Option<&mut [f32; 512]>,
+            last_input_phases: &mut [f32; 512],
+            last_output_phases: &mut [f32; 512],
+            previous_pitch_shift_ratio: f32,
+            config: &$crate::VocalEffectsConfig,
+            settings: &$crate::MusicalSettings,
+        ) -> [f32; 512] {
+            $crate::process_vocal_effects::process_dry_512(
+                unwrapped_buffer,
+                synth_buffer,
+                last_input_phases,
+                last_output_phases,
+                previous_pitch_shift_ratio,
+                config,
+                settings,
+                $sample_rate,
+                $hop_ratio,
+            )
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! process_dry_config_impl_1024 {
+    ($func_name:ident, $sample_rate:expr, $hop_ratio:expr) => {
+        pub fn $func_name(
+            unwrapped_buffer: &mut [f32; 1024],
+            synth_buffer: Option<&mut [f32; 1024]>,
+            last_input_phases: &mut [f32; 1024],
+            last_output_phases: &mut [f32; 1024],
+            previous_pitch_shift_ratio: f32,
+            config: &$crate::VocalEffectsConfig,
+            settings: &$crate::MusicalSettings,
+        ) -> [f32; 1024] {
+            $crate::process_vocal_effects::process_dry_1024(
+                unwrapped_buffer,
+                synth_buffer,
+                last_input_phases,
+                last_output_phases,
+                previous_pitch_shift_ratio,
+                config,
+                settings,
+                $sample_rate,
+                $hop_ratio,
+            )
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! process_dry_config_impl_2048 {
+    ($func_name:ident, $sample_rate:expr, $hop_ratio:expr) => {
+        pub fn $func_name(
+            unwrapped_buffer: &mut [f32; 2048],
+            synth_buffer: Option<&mut [f32; 2048]>,
+            last_input_phases: &mut [f32; 2048],
+            last_output_phases: &mut [f32; 2048],
+            previous_pitch_shift_ratio: f32,
+            config: &$crate::VocalEffectsConfig,
+            settings: &$crate::MusicalSettings,
+        ) -> [f32; 2048] {
+            $crate::process_vocal_effects::process_dry_2048(
+                unwrapped_buffer,
+                synth_buffer,
+                last_input_phases,
+                last_output_phases,
+                previous_pitch_shift_ratio,
+                config,
+                settings,
+                $sample_rate,
+                $hop_ratio,
+            )
+        }
+    };
+}
+
+#[macro_export]
+macro_rules! process_dry_config_impl_4096 {
+    ($func_name:ident, $sample_rate:expr, $hop_ratio:expr) => {
+        pub fn $func_name(
+            unwrapped_buffer: &mut [f32; 4096],
+            synth_buffer: Option<&mut [f32; 4096]>,
+            last_input_phases: &mut [f32; 4096],
+            last_output_phases: &mut [f32; 4096],
+            previous_pitch_shift_ratio: f32,
+            config: &$crate::VocalEffectsConfig,
+            settings: &$crate::MusicalSettings,
+        ) -> [f32; 4096] {
+            $crate::process_vocal_effects::process_dry_4096(
+                unwrapped_buffer,
+                synth_buffer,
+                last_input_phases,
+                last_output_phases,
+                previous_pitch_shift_ratio,
+                config,
+                settings,
+                $sample_rate,
+                $hop_ratio,
+            )
+        }
+    };
+}
+
 /// Configuration guidelines and examples for vocal effects processing
 ///
 /// ## Example usage showing how to use the process_vocal_effects_config macro
@@ -313,6 +642,10 @@ macro_rules! process_vocal_effects_configs {
 /// synthphone_vocals::process_vocal_effects_config!(process_vocal_effects_balanced, 1024, 48000.0, hop_ratio = 0.25);
 /// synthphone_vocals::process_vocal_effects_config!(process_vocal_effects_quality, 2048, 48000.0, hop_ratio = 0.125);
 /// synthphone_vocals::process_vocal_effects_config!(process_vocal_effects_hifi, 4096, 48000.0, hop_ratio = 0.0625);
+///
+/// // Generate vocode and dry processing functions
+/// synthphone_vocals::process_vocode_config!(my_vocoder, 1024, 48000.0, hop_ratio = 0.25);
+/// synthphone_vocals::process_dry_config!(my_dry_processor, 1024, 48000.0, hop_ratio = 0.25);
 ///
 /// // Usage in your application
 /// fn process_audio() {
@@ -326,12 +659,36 @@ macro_rules! process_vocal_effects_configs {
 ///     settings.note = 0; // Auto mode
 ///     settings.formant = 1; // Enable formant preservation
 ///
-///     // Process with balanced quality
+///     // Process with balanced quality autotune
 ///     let result = process_vocal_effects_balanced(
 ///         &mut buffer,
 ///         &mut input_phases,
 ///         &mut output_phases,
 ///         1.0, // Previous pitch shift ratio
+///         &config,
+///         &settings
+///     );
+///
+///     // Process with vocoder
+///     let mut vocal_buffer = [0.0f32; 1024];
+///     let mut carrier_buffer = [0.0f32; 1024]; // Your synthesizer signal
+///     let vocode_result = my_vocoder(
+///         &mut vocal_buffer,
+///         &mut carrier_buffer,
+///         &mut input_phases,
+///         &mut output_phases,
+///         &config,
+///         &settings
+///     );
+///
+///     // Process with dry mode
+///     let synth_buffer = Some(&mut [0.0f32; 1024]);
+///     let dry_result = my_dry_processor(
+///         &mut buffer,
+///         synth_buffer,
+///         &mut input_phases,
+///         &mut output_phases,
+///         1.0,
 ///         &config,
 ///         &settings
 ///     );
@@ -351,6 +708,11 @@ macro_rules! process_vocal_effects_configs {
 /// - **0.125** (1/8): Very high quality, 87.5% overlap, high CPU usage
 /// - **0.25** (1/4): Good quality, 75% overlap, moderate CPU usage (default)
 /// - **0.5** (1/2): Lower quality, 50% overlap, lowest CPU usage
+///
+/// ### Processing Modes
+/// - **Autotune**: Pitch correction to musical notes with formant preservation
+/// - **Vocode**: Applies vocal formant envelope to carrier signal (classic vocoder)
+/// - **Dry**: Pitch shifting and formant control without pitch correction
 ///
 /// ### Formant Settings in MusicalSettings
 /// - **0**: No formant processing (fastest)
