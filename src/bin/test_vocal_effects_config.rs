@@ -9,22 +9,40 @@ use synthphone_vocals::{
 };
 
 // Generate individual vocal effects configurations for different use cases
-process_vocal_effects_config!(process_vocal_effects_studio, 4096, 48000.0, hop_ratio = 0.125);
-process_vocal_effects_config!(process_vocal_effects_live, 512, 48000.0, hop_ratio = 0.5);
-process_vocal_effects_config!(process_vocal_effects_balanced, 2048, 48000.0, hop_ratio = 0.25);
+process_vocal_effects_config!(
+    process_vocal_effects_studio,
+    4096,
+    48000.0,
+    mode = autotune,
+    hop_ratio = 0.125
+);
+process_vocal_effects_config!(
+    process_vocal_effects_live,
+    512,
+    48000.0,
+    mode = autotune,
+    hop_ratio = 0.5
+);
+process_vocal_effects_config!(
+    process_vocal_effects_balanced,
+    2048,
+    48000.0,
+    mode = autotune,
+    hop_ratio = 0.25
+);
 process_vocal_effects_config!(
     process_vocal_effects_embedded,
     512,
     44100.0,
-    hop_ratio = 0.5,
-    buffer_multiplier = 2
+    mode = autotune,
+    hop_ratio = 0.5
 );
 
 // Generate multiple configurations at once
 process_vocal_effects_configs! {
-    draft => (process_vocal_effects_draft, 512, 48000.0, hop_ratio = 0.5),
-    preview => (process_vocal_effects_preview, 1024, 48000.0, hop_ratio = 0.25),
-    production => (process_vocal_effects_production, 4096, 48000.0, hop_ratio = 0.125)
+    draft => (process_vocal_effects_draft, 512, 48000.0, mode = autotune, hop_ratio = 0.5),
+    preview => (process_vocal_effects_preview, 1024, 48000.0, mode = autotune, hop_ratio = 0.25),
+    production => (process_vocal_effects_production, 4096, 48000.0, mode = autotune, hop_ratio = 0.125)
 }
 
 /// Configuration data for comparison
@@ -277,15 +295,15 @@ fn demonstrate_custom_config() {
         process_vocal_effects_voice_custom,
         2048,
         48000.0,
-        hop_ratio = 0.25,
-        buffer_multiplier = 4
+        mode = autotune,
+        hop_ratio = 0.25
     );
 
     println!("Generated custom voice processor with:");
     println!("  FFT Size: 2048 (good frequency resolution for voice)");
     println!("  Sample Rate: 48kHz (professional quality)");
     println!("  Hop Ratio: 0.25 (75% overlap for smooth processing)");
-    println!("  Buffer Multiplier: 4 (standard buffering)");
+    println!("  Mode: autotune (pitch correction with formant preservation)");
     println!();
 
     // Test the custom configuration
