@@ -1,7 +1,4 @@
 //! Configuration types for the vocal effects library
-
-use crate::process_vocal_effects::ProcessingMode;
-
 /// Configuration for the vocal effects processor
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct VocalEffectsConfig {
@@ -11,8 +8,6 @@ pub struct VocalEffectsConfig {
     pub hop_size: usize,
     /// Sample rate in Hz
     pub sample_rate: f32,
-    /// Processing mode (Autotune, Vocode, or Dry)
-    pub processing_mode: ProcessingMode,
     /// Hop ratio as fraction of FFT size (0.0625 to 0.5)
     pub hop_ratio: f32,
     /// Speed of pitch correction transition (0.0 to 1.0)
@@ -31,7 +26,6 @@ impl Default for VocalEffectsConfig {
             fft_size: 1024,
             hop_size: 256, // Will be calculated from hop_ratio
             sample_rate: 48000.0,
-            processing_mode: ProcessingMode::Autotune,
             hop_ratio: 0.25,
             transition_speed: 0.1,
             pitch_correction_strength: 0.999,
@@ -46,7 +40,6 @@ impl VocalEffectsConfig {
     pub fn new(
         fft_size: usize,
         sample_rate: f32,
-        processing_mode: ProcessingMode,
         hop_ratio: f32,
     ) -> Result<Self, crate::VocalEffectsError> {
         if !fft_size.is_power_of_two() {
@@ -64,41 +57,7 @@ impl VocalEffectsConfig {
 
         let hop_size = (fft_size as f32 * hop_ratio) as usize;
 
-        Ok(Self {
-            fft_size,
-            hop_size,
-            sample_rate,
-            processing_mode,
-            hop_ratio,
-            ..Default::default()
-        })
-    }
-
-    /// Create configuration for autotune processing
-    pub fn autotune(
-        fft_size: usize,
-        sample_rate: f32,
-        hop_ratio: f32,
-    ) -> Result<Self, crate::VocalEffectsError> {
-        Self::new(fft_size, sample_rate, ProcessingMode::Autotune, hop_ratio)
-    }
-
-    /// Create configuration for vocoder processing
-    pub fn vocode(
-        fft_size: usize,
-        sample_rate: f32,
-        hop_ratio: f32,
-    ) -> Result<Self, crate::VocalEffectsError> {
-        Self::new(fft_size, sample_rate, ProcessingMode::Vocode, hop_ratio)
-    }
-
-    /// Create configuration for dry processing
-    pub fn dry(
-        fft_size: usize,
-        sample_rate: f32,
-        hop_ratio: f32,
-    ) -> Result<Self, crate::VocalEffectsError> {
-        Self::new(fft_size, sample_rate, ProcessingMode::Dry, hop_ratio)
+        Ok(Self { fft_size, hop_size, sample_rate, hop_ratio, ..Default::default() })
     }
 
     /// Update hop ratio and recalculate hop size
