@@ -27,8 +27,6 @@ pub mod utils;
 pub mod embedded;
 
 // Existing modules (kept for compatibility)
-pub mod fade;
-pub mod normal_phase_advance;
 pub mod oscillator;
 
 // Re-export main API

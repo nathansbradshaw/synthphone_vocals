@@ -50,6 +50,7 @@ fn main() {
         // Process the audio buffer with vocal effects
         let processed = process_vocals_realtime(
             &mut audio_buffer,
+            None,
             &mut input_phases,
             &mut output_phases,
             pitch_shift_ratio,
@@ -163,6 +164,7 @@ mod tests {
         // Process should not panic
         let processed = process_vocals_realtime(
             &mut audio_buffer,
+            None,
             &mut input_phases,
             &mut output_phases,
             1.0,
@@ -205,6 +207,7 @@ mod tests {
 
             let _processed = process_vocals_realtime(
                 &mut audio_buffer,
+                None,
                 &mut input_phases,
                 &mut output_phases,
                 1.0,
