@@ -20,6 +20,9 @@ pub mod ring_buffer;
 // Utility modules
 pub mod utils;
 
+pub mod effects;
+pub mod fft;
+
 // Existing modules (kept for compatibility)
 pub mod oscillator;
 
