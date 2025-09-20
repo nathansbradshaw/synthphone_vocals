@@ -1,5 +1,5 @@
 name: Feature Request
-description: Suggest a new feature or enhancement for synthphone_vocals
+description: Suggest a new feature or enhancement for synthphone_e_vocal_dsp
 title: "[Feature]: "
 labels: ["enhancement", "feature-request"]
 assignees: []
@@ -113,7 +113,7 @@ body:
       render: rust
       placeholder: |
         // Example of how the feature might be used
-        use synthphone_vocals::*;
+        use synthphone_e_vocal_dsp::*;
 
         fn example() {
             // Your proposed API usage here
@@ -179,5 +179,5 @@ body:
           required: true
         - label: I have provided a clear use case for this feature
           required: true
-        - label: This feature aligns with the goals of synthphone_vocals (real-time audio processing)
+        - label: This feature aligns with the goals of synthphone_e_vocal_dsp (real-time audio processing)
           required: true

@@ -1,7 +1,7 @@
 # Synthphone Vocals
 
-<!--[![Crates.io](https://img.shields.io/crates/v/synthphone_vocals.svg)]()-->
-<!--[![Documentation](https://docs.rs/synthphone_vocals/badge.svg)]()-->
+<!--[![Crates.io](https://img.shields.io/crates/v/synthphone_e_vocal_dsp.svg)]()-->
+<!--[![Documentation](https://docs.rs/synthphone_e_vocal_dsp/badge.svg)]()-->
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 A high-performance, real-time vocal effects library for embedded and desktop applications. Features pitch correction, vocoding, formant shifting, and musical key awareness with `no_std` support and optimized for minimal latency audio processing.
