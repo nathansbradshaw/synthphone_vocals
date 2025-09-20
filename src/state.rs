@@ -1,3 +1,14 @@
+/// Processing modes for vocal effects
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ProcessingMode {
+    /// Pitch correction/autotune mode
+    Autotune,
+    /// Vocoder mode - applies vocal formants to carrier signal
+    Vocode,
+    /// Dry mode - pitch shifting with formant preservation but no correction
+    Dry,
+}
+
 /// Musical settings for vocal effects processing
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct MusicalSettings {
@@ -9,6 +20,8 @@ pub struct MusicalSettings {
     pub octave: i32,
     /// Formant shift mode (0 = none, 1 = lower, 2 = higher)
     pub formant: i32,
+    /// Processing mode for vocal effects
+    pub mode: ProcessingMode,
 }
 
 impl Default for MusicalSettings {
@@ -18,6 +31,7 @@ impl Default for MusicalSettings {
             note: 0, // Auto mode
             octave: 2,
             formant: 0, // No formant shift
+            mode: ProcessingMode::Autotune,
         }
     }
 }

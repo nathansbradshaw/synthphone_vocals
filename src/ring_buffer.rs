@@ -28,7 +28,7 @@ use core::{
 /// # Examples
 ///
 /// ```rust
-/// use synthphone_vocals::ring_buffer::RingBuffer;
+/// use synthphone_e_vocal_dsp::ring_buffer::RingBuffer;
 /// let mut buffer: RingBuffer<1024> = RingBuffer::new();
 ///
 /// // Producer thread
@@ -70,7 +70,7 @@ impl<const N: usize> RingBuffer<N> {
     /// # Example
     ///
     /// ```rust
-    /// use synthphone_vocals::ring_buffer::RingBuffer;
+    /// use synthphone_e_vocal_dsp::ring_buffer::RingBuffer;
     /// let buffer: RingBuffer<1024> = RingBuffer::with_offset(512);
     /// ```
     pub fn with_offset(offset: u32) -> Self {
@@ -88,7 +88,7 @@ impl<const N: usize> RingBuffer<N> {
     /// ## Example
     ///
     /// ```rust
-    /// use synthphone_vocals::ring_buffer::RingBuffer;
+    /// use synthphone_e_vocal_dsp::ring_buffer::RingBuffer;
     /// let buffer: RingBuffer<1024> = RingBuffer::new();
     /// ```
     pub const fn new() -> Self {
@@ -113,7 +113,7 @@ impl<const N: usize> RingBuffer<N> {
     /// # Example
     ///
     /// ```rust
-    /// use synthphone_vocals::ring_buffer::RingBuffer;
+    /// use synthphone_e_vocal_dsp::ring_buffer::RingBuffer;
     /// let mut buffer: RingBuffer<1024> = RingBuffer::new();
     /// buffer.push(0.5);
     /// buffer.push(0.25);
@@ -140,7 +140,7 @@ impl<const N: usize> RingBuffer<N> {
     /// # Example
     ///
     /// ```rust
-    /// use synthphone_vocals::ring_buffer::RingBuffer;
+    /// use synthphone_e_vocal_dsp::ring_buffer::RingBuffer;
     /// let mut buffer: RingBuffer<1024> = RingBuffer::new();
     /// buffer.push(0.75);
     /// let sample = buffer.pop(); // Returns 0.75
@@ -169,13 +169,37 @@ impl<const N: usize> RingBuffer<N> {
     /// # Example
     ///
     /// ```rust
-    /// use synthphone_vocals::ring_buffer::RingBuffer;
+    /// use synthphone_e_vocal_dsp::ring_buffer::RingBuffer;
     /// let mut buffer: RingBuffer<1024> = RingBuffer::new();
     /// buffer.advance_write(10);
     /// assert_eq!(buffer.write_index(), 10);
     /// ```
     pub fn write_index(&self) -> u32 {
         self.write.load(core::sync::atomic::Ordering::Relaxed)
+    }
+
+    /// This method performs overlap-add synthesis by accumulating the provided
+    /// samples into the buffer at consecutive positions starting from the current
+    /// read position. This is commonly used in audio synthesis where overlapping
+    /// frames need to be summed together.
+    ///
+    /// # Parameters
+    ///
+    /// * `samples` - Array of audio samples to add to the buffer
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use synthphone_e_vocal_dsp::ring_buffer::RingBuffer;
+    /// let buffer: RingBuffer<1024> = RingBuffer::new();
+    /// let synthesis_frame = [0.1, 0.2, 0.3, 0.4];
+    /// buffer.write_overlapped_samples(&synthesis_frame);
+    /// ```
+    pub fn write_overlapped_samples<const FRAME_SIZE: usize>(&self, samples: &[f32; FRAME_SIZE]) {
+        // Add samples to buffer using overlap-add (accumulation)
+        for (i, &sample) in samples.iter().enumerate() {
+            self.add_at_offset(i as u32, sample);
+        }
     }
 
     /// Advances the write pointer by `n` positions without writing data.
@@ -190,7 +214,7 @@ impl<const N: usize> RingBuffer<N> {
     /// # Example
     ///
     /// ```rust
-    /// use synthphone_vocals::ring_buffer::RingBuffer;
+    /// use synthphone_e_vocal_dsp::ring_buffer::RingBuffer;
     /// let mut buffer: RingBuffer<1024> = RingBuffer::new();
     /// ```
     pub fn advance_write(&self, n: u32) {
@@ -243,7 +267,7 @@ impl<const N: usize> RingBuffer<N> {
     /// # Example
     ///
     /// ```rust
-    /// use synthphone_vocals::ring_buffer::RingBuffer;
+    /// use synthphone_e_vocal_dsp::ring_buffer::RingBuffer;
     /// let mut buffer: RingBuffer<1024> = RingBuffer::new();
     /// buffer.add_at_offset(512, 1.0); // Add 1.0 at position 512 samples ago
     /// ```
@@ -267,7 +291,7 @@ impl<const N: usize> RingBuffer<N> {
     /// # Example
     ///
     /// ```rust
-    /// use synthphone_vocals::ring_buffer::RingBuffer;
+    /// use synthphone_e_vocal_dsp::ring_buffer::RingBuffer;
     /// let mut buffer: RingBuffer<1024> = RingBuffer::new();
     /// buffer.push(0.5);
     /// buffer.push(0.25);
@@ -299,7 +323,7 @@ impl<const N: usize> RingBuffer<N> {
     /// # Example
     ///
     /// ```rust,no_run
-    /// use synthphone_vocals::ring_buffer::RingBuffer;
+    /// use synthphone_e_vocal_dsp::ring_buffer::RingBuffer;
     /// let buffer: RingBuffer<1024> = RingBuffer::new();
     /// let mut block = [0.0f32; 32];
     /// buffer.latest_block(&mut block); // Copy latest 32 samples
@@ -346,7 +370,7 @@ impl<const N: usize> RingBuffer<N> {
     /// # Example
     ///
     /// ```rust
-    /// use synthphone_vocals::ring_buffer::RingBuffer;
+    /// use synthphone_e_vocal_dsp::ring_buffer::RingBuffer;
     /// let mut buffer: RingBuffer<1024> = RingBuffer::new();
     /// // ... write some samples ...
     /// let write_pos = buffer.write_index();

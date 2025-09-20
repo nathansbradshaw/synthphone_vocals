@@ -14,8 +14,8 @@ Thank you for your interest in contributing to Synthphone Vocals! This document 
 
 1. **Clone the repository:**
 ```bash
-git clone https://github.com/yourusername/synthphone_vocals
-cd synthphone_vocals
+git clone https://github.com/yourusername/synthphone_e_vocal_dsp
+cd synthphone_e_vocal_dsp
 ```
 
 2. **Install Rust targets (for embedded development):**
@@ -68,7 +68,7 @@ cargo clippy --all-features -- -D warnings
    - Bounded execution time
    - Lock-free data structures preferred
 
-2. **Embedded Friendly**: 
+2. **Embedded Friendly**:
    - `no_std` compatible core functionality
    - Minimal RAM usage
    - Efficient algorithms
@@ -92,7 +92,7 @@ src/
 ├── vocal_effects_config.rs # Processing function generation
 ├── process_vocal_effects.rs # Main pitch correction engine
 ├── process_frequencies.rs  # Frequency analysis
-├── frequencies.rs         # Musical calculations  
+├── frequencies.rs         # Musical calculations
 ├── keys.rs               # Musical theory
 ├── ring_buffer.rs        # Lock-free buffers
 ├── hann_window.rs        # Windowing functions
@@ -115,7 +115,7 @@ src/
 # All tests with all features
 cargo test --all-features
 
-# Embedded-only tests  
+# Embedded-only tests
 cargo test --no-default-features --features embedded
 
 # Documentation tests
@@ -131,28 +131,28 @@ cargo bench
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_specific_behavior() {
         // Arrange
         let input = setup_test_data();
-        
-        // Act  
+
+        // Act
         let result = function_under_test(input);
-        
+
         // Assert
         assert_eq!(result, expected_value);
         assert!(result.is_valid());
     }
-    
-    #[test] 
+
+    #[test]
     fn test_real_time_constraints() {
         use std::time::Instant;
-        
+
         let start = Instant::now();
         let result = process_audio_block(&audio_data);
         let duration = start.elapsed();
-        
+
         // Must complete within buffer time
         assert!(duration.as_micros() < 1000); // 1ms for 48 samples @ 48kHz
     }
@@ -168,7 +168,7 @@ For audio quality testing:
 fn test_audio_quality() {
     let input = load_test_audio("test_vocals.wav");
     let processed = process_with_vocal_effects(input);
-    
+
     // Check for artifacts
     assert!(measure_thd(&processed) < 0.01); // < 1% THD
     assert!(measure_latency(&processed) < max_latency);
@@ -180,7 +180,7 @@ fn test_audio_quality() {
 ### Code Documentation
 
 - **Public APIs**: Must have comprehensive doc comments
-- **Complex algorithms**: Include mathematical background  
+- **Complex algorithms**: Include mathematical background
 - **Examples**: Show real usage patterns
 - **Safety**: Document any unsafe code or assumptions
 
@@ -188,7 +188,7 @@ fn test_audio_quality() {
 /// Processes audio with real-time vocal pitch correction.
 ///
 /// This function performs pitch correction using a phase vocoder approach,
-/// with automatic pitch detection and correction to the nearest note in 
+/// with automatic pitch detection and correction to the nearest note in
 /// the specified musical key.
 ///
 /// # Parameters
@@ -206,14 +206,14 @@ fn test_audio_quality() {
 /// # Example
 /// ```rust
 /// let mut audio = [0.0f32; 1024];
-/// let config = VocalEffectsConfig::default();  
+/// let config = VocalEffectsConfig::default();
 /// let settings = MusicalSettings { key: 0, ..Default::default() };
 ///
 /// let result = process_vocal_effects(&mut audio, &config, &settings);
 /// ```
 pub fn process_vocal_effects(
     buffer: &mut [f32],
-    config: &VocalEffectsConfig, 
+    config: &VocalEffectsConfig,
     settings: &MusicalSettings
 ) -> ProcessResult {
     // Implementation...
@@ -256,14 +256,14 @@ Brief description of changes and motivation.
 
 ## Type of Change
 - [ ] Bug fix
-- [ ] New feature  
+- [ ] New feature
 - [ ] Performance improvement
 - [ ] Documentation update
 - [ ] Refactoring
 
 ## Testing
 - [ ] Unit tests pass
-- [ ] Integration tests pass  
+- [ ] Integration tests pass
 - [ ] Tested on embedded hardware (if applicable)
 - [ ] Audio quality verified (if applicable)
 
@@ -297,7 +297,7 @@ Clear description of the bug and expected behavior.
 
 ## Reproduction Steps
 1. Step 1
-2. Step 2  
+2. Step 2
 3. Step 3
 
 ## Environment
@@ -322,7 +322,7 @@ When contributing audio processing code:
 ### Quality Metrics
 - **THD+N**: < 0.1% for clean signals
 - **Latency**: Minimize while maintaining quality
-- **Artifacts**: Avoid audible glitches or discontinuities  
+- **Artifacts**: Avoid audible glitches or discontinuities
 - **CPU usage**: Profile and optimize hot paths
 
 ### Testing Audio Changes
