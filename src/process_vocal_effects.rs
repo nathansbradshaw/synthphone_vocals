@@ -470,9 +470,7 @@ where
     if formant == 0 && (pitch_shift_ratio > 0.99 && pitch_shift_ratio < 1.01) {
         // Direct pass-through - just copy spectrum
         let num_bins = HALF_N.min(fft_result.len());
-        for i in 0..num_bins {
-            full_spectrum[i] = fft_result[i];
-        }
+        full_spectrum[..num_bins].copy_from_slice(&fft_result[..num_bins]);
         for i in 1..num_bins {
             if N - i < full_spectrum.len() {
                 full_spectrum[N - i] = fft_result[i].conj();
@@ -564,10 +562,8 @@ where
                 im: amplitude * sinf(out_phase),
             };
 
-            if i > 0 && i < num_bins {
-                if N - i < full_spectrum.len() {
-                    full_spectrum[N - i] = full_spectrum[i].conj();
-                }
+            if i > 0 && i < num_bins && N - i < full_spectrum.len() {
+                full_spectrum[N - i] = full_spectrum[i].conj();
             }
         }
     }
