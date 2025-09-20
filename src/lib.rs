@@ -6,7 +6,6 @@ pub mod config;
 pub mod error;
 pub mod fft_config;
 pub mod state;
-pub mod vocal_effects_config;
 
 // Audio processing modules
 pub mod frequencies;
