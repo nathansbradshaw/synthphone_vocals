@@ -154,17 +154,14 @@ fn calculate_pitch_shift(
 }
 
 /// Generic vocal effects processing function that works with different FFT sizes and processing modes
-#[allow(clippy::too_many_arguments)]
 fn process_vocal_effects<const N: usize, const HALF_N: usize, F>(
     unwrapped_buffer: &mut [f32; N],
     carrier_buffer: Option<&mut [f32; N]>,
     last_input_phases: &mut [f32; N],
     last_output_phases: &mut [f32; N],
     previous_pitch_shift_ratio: f32,
-    _config: &VocalEffectsConfig,
+    config: &VocalEffectsConfig,
     settings: &MusicalSettings,
-    sample_rate: f32,
-    hop_ratio: f32,
 ) -> [f32; N]
 where
     F: FftOps<N, HALF_N>,
@@ -175,54 +172,44 @@ where
             last_input_phases,
             last_output_phases,
             previous_pitch_shift_ratio,
-            _config,
+            config,
             settings,
-            sample_rate,
-            hop_ratio,
         ),
         ProcessingMode::Vocode => process_vocode_generic::<N, HALF_N, F>(
             unwrapped_buffer,
             carrier_buffer.expect("Carrier buffer required for vocode mode"),
             last_input_phases,
             last_output_phases,
-            _config,
+            config,
             settings,
-            sample_rate,
-            hop_ratio,
         ),
         ProcessingMode::Dry => process_dry_generic::<N, HALF_N, F>(
             unwrapped_buffer,
             carrier_buffer,
             last_input_phases,
             last_output_phases,
-            previous_pitch_shift_ratio,
-            _config,
+            config,
             settings,
-            sample_rate,
-            hop_ratio,
         ),
     }
 }
 
 /// Generic pitch correction processing (pitch correction)
-#[allow(clippy::too_many_arguments)]
 fn process_pitch_correction_generic<const N: usize, const HALF_N: usize, F>(
     unwrapped_buffer: &mut [f32; N],
     last_input_phases: &mut [f32; N],
     last_output_phases: &mut [f32; N],
     previous_pitch_shift_ratio: f32,
-    _config: &VocalEffectsConfig,
+    config: &VocalEffectsConfig,
     settings: &MusicalSettings,
-    sample_rate: f32,
-    hop_ratio: f32,
 ) -> [f32; N]
 where
     F: FftOps<N, HALF_N>,
 {
     const GAIN_COMPENSATION: f32 = 2.0 / 3.0;
 
-    let hop_size = (N as f32 * hop_ratio) as usize;
-    let bin_width = sample_rate / N as f32;
+    let hop_size = (N as f32 * config.hop_ratio) as usize;
+    let bin_width = config.sample_rate / N as f32;
 
     let analysis_window_buffer = F::get_hann_window();
     let mut full_spectrum = [microfft::Complex32 { re: 0.0, im: 0.0 }; N];
@@ -353,16 +340,14 @@ where
 }
 
 /// Generic vocoder processing
-#[allow(clippy::too_many_arguments)]
 fn process_vocode_generic<const N: usize, const HALF_N: usize, F>(
     input_buffer: &mut [f32; N],
     carrier_buffer: &mut [f32; N],
+    // TODO if we don't need this, remove it
     _last_input_phases: &mut [f32; N],
     _last_output_phases: &mut [f32; N],
     _config: &VocalEffectsConfig,
     _settings: &MusicalSettings,
-    _sample_rate: f32,
-    _hop_ratio: f32,
 ) -> [f32; N]
 where
     F: FftOps<N, HALF_N>,
@@ -424,22 +409,18 @@ where
 }
 
 /// Generic dry processing (pitch shifting with formant preservation but no correction)
-#[allow(clippy::too_many_arguments)]
 fn process_dry_generic<const N: usize, const HALF_N: usize, F>(
     unwrapped_buffer: &mut [f32; N],
     synth_buffer: Option<&mut [f32; N]>,
     last_input_phases: &mut [f32; N],
     last_output_phases: &mut [f32; N],
-    _previous_pitch_shift_ratio: f32,
-    _config: &VocalEffectsConfig,
+    config: &VocalEffectsConfig,
     settings: &MusicalSettings,
-    _sample_rate: f32,
-    hop_ratio: f32,
 ) -> [f32; N]
 where
     F: FftOps<N, HALF_N>,
 {
-    let hop_size = (N as f32 * hop_ratio) as usize;
+    let hop_size = (N as f32 * config.hop_ratio) as usize;
     let analysis_window_buffer = F::get_hann_window();
     let mut full_spectrum = [microfft::Complex32 { re: 0.0, im: 0.0 }; N];
     let mut analysis_magnitudes = [0.0; HALF_N];
@@ -592,7 +573,6 @@ where
 }
 
 /// Specialized vocal effects function for 512-point FFT
-#[allow(clippy::too_many_arguments)]
 pub fn process_vocal_effects_512(
     unwrapped_buffer: &mut [f32; 512],
     carrier_buffer: Option<&mut [f32; 512]>,
@@ -601,8 +581,6 @@ pub fn process_vocal_effects_512(
     previous_pitch_shift_ratio: f32,
     config: &VocalEffectsConfig,
     settings: &MusicalSettings,
-    sample_rate: f32,
-    hop_ratio: f32,
 ) -> [f32; 512] {
     process_vocal_effects::<512, 256, Fft512>(
         unwrapped_buffer,
@@ -612,13 +590,10 @@ pub fn process_vocal_effects_512(
         previous_pitch_shift_ratio,
         config,
         settings,
-        sample_rate,
-        hop_ratio,
     )
 }
 
 /// Specialized vocal effects function for 1024-point FFT
-#[allow(clippy::too_many_arguments)]
 pub fn process_vocal_effects_1024(
     unwrapped_buffer: &mut [f32; 1024],
     carrier_buffer: Option<&mut [f32; 1024]>,
@@ -627,8 +602,6 @@ pub fn process_vocal_effects_1024(
     previous_pitch_shift_ratio: f32,
     config: &VocalEffectsConfig,
     settings: &MusicalSettings,
-    sample_rate: f32,
-    hop_ratio: f32,
 ) -> [f32; 1024] {
     process_vocal_effects::<1024, 512, Fft1024>(
         unwrapped_buffer,
@@ -638,13 +611,10 @@ pub fn process_vocal_effects_1024(
         previous_pitch_shift_ratio,
         config,
         settings,
-        sample_rate,
-        hop_ratio,
     )
 }
 
 /// Specialized vocal effects function for 2048-point FFT
-#[allow(clippy::too_many_arguments)]
 pub fn process_vocal_effects_2048(
     unwrapped_buffer: &mut [f32; 2048],
     carrier_buffer: Option<&mut [f32; 2048]>,
@@ -653,8 +623,6 @@ pub fn process_vocal_effects_2048(
     previous_pitch_shift_ratio: f32,
     config: &VocalEffectsConfig,
     settings: &MusicalSettings,
-    sample_rate: f32,
-    hop_ratio: f32,
 ) -> [f32; 2048] {
     process_vocal_effects::<2048, 1024, Fft2048>(
         unwrapped_buffer,
@@ -664,13 +632,10 @@ pub fn process_vocal_effects_2048(
         previous_pitch_shift_ratio,
         config,
         settings,
-        sample_rate,
-        hop_ratio,
     )
 }
 
 /// Specialized vocal effects function for 4096-point FFT
-#[allow(clippy::too_many_arguments)]
 pub fn process_vocal_effects_4096(
     unwrapped_buffer: &mut [f32; 4096],
     carrier_buffer: Option<&mut [f32; 4096]>,
@@ -679,8 +644,6 @@ pub fn process_vocal_effects_4096(
     previous_pitch_shift_ratio: f32,
     config: &VocalEffectsConfig,
     settings: &MusicalSettings,
-    sample_rate: f32,
-    hop_ratio: f32,
 ) -> [f32; 4096] {
     process_vocal_effects::<4096, 2048, Fft4096>(
         unwrapped_buffer,
@@ -690,7 +653,5 @@ pub fn process_vocal_effects_4096(
         previous_pitch_shift_ratio,
         config,
         settings,
-        sample_rate,
-        hop_ratio,
     )
 }

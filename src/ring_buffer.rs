@@ -178,6 +178,30 @@ impl<const N: usize> RingBuffer<N> {
         self.write.load(core::sync::atomic::Ordering::Relaxed)
     }
 
+    /// This method performs overlap-add synthesis by accumulating the provided
+    /// samples into the buffer at consecutive positions starting from the current
+    /// read position. This is commonly used in audio synthesis where overlapping
+    /// frames need to be summed together.
+    ///
+    /// # Parameters
+    ///
+    /// * `samples` - Array of audio samples to add to the buffer
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use synthphone_vocals::ring_buffer::RingBuffer;
+    /// let buffer: RingBuffer<1024> = RingBuffer::new();
+    /// let synthesis_frame = [0.1, 0.2, 0.3, 0.4];
+    /// buffer.write_overlapped_samples(&synthesis_frame);
+    /// ```
+    pub fn write_overlapped_samples<const FRAME_SIZE: usize>(&self, samples: &[f32; FRAME_SIZE]) {
+        // Add samples to buffer using overlap-add (accumulation)
+        for (i, &sample) in samples.iter().enumerate() {
+            self.add_at_offset(i as u32, sample);
+        }
+    }
+
     /// Advances the write pointer by `n` positions without writing data.
     ///
     /// This is useful for reserving space in the buffer or when data is written

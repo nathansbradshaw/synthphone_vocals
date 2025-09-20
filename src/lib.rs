@@ -20,11 +20,6 @@ pub mod ring_buffer;
 // Utility modules
 pub mod utils;
 
-// Platform-specific modules
-#[cfg(feature = "embedded")]
-#[cfg_attr(docsrs, doc(cfg(feature = "embedded")))]
-pub mod embedded;
-
 // Existing modules (kept for compatibility)
 pub mod oscillator;
 
