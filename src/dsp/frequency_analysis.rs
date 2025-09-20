@@ -2,7 +2,7 @@ use core::f32::consts::PI;
 
 use libm::{fabsf, floorf, fmodf, roundf};
 
-use crate::frequencies::find_nearest_note_frequency;
+use crate::audio::find_nearest_note_frequency;
 
 #[inline(always)]
 pub fn calculate_updates<const N: usize>(

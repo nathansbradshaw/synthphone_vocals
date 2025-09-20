@@ -22,7 +22,7 @@ impl FftOps<512, 256> for Fft512 {
     }
 
     fn get_hann_window() -> &'static [f32; 512] {
-        &crate::hann_window::HANN_WINDOW_512
+        &crate::dsp::windowing::HANN_WINDOW_512
     }
 }
 
@@ -38,7 +38,7 @@ impl FftOps<1024, 512> for Fft1024 {
     }
 
     fn get_hann_window() -> &'static [f32; 1024] {
-        &crate::hann_window::HANN_WINDOW_1024
+        &crate::dsp::windowing::HANN_WINDOW_1024
     }
 }
 
@@ -54,7 +54,7 @@ impl FftOps<2048, 1024> for Fft2048 {
     }
 
     fn get_hann_window() -> &'static [f32; 2048] {
-        &crate::hann_window::HANN_WINDOW_2048
+        &crate::dsp::windowing::HANN_WINDOW_2048
     }
 }
 
@@ -70,6 +70,6 @@ impl FftOps<4096, 2048> for Fft4096 {
     }
 
     fn get_hann_window() -> &'static [f32; 4096] {
-        &crate::hann_window::HANN_WINDOW_4096
+        &crate::dsp::windowing::HANN_WINDOW_4096
     }
 }

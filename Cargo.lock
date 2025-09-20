@@ -552,7 +552,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "synthphone_vocals"
+name = "synthphone-e-vocal-dsp"
 version = "0.1.1"
 dependencies = [
  "approx",

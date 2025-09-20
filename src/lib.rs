@@ -4,27 +4,20 @@
 // Core modules
 pub mod config;
 pub mod error;
-pub mod fft_config;
 pub mod state;
 
 // Audio processing modules
-pub mod frequencies;
-pub mod hann_window;
-pub mod keys;
-pub mod process_frequencies;
-pub mod process_vocal_effects;
+pub mod audio;
+pub mod vocal_effects;
 
 // Buffer management
 pub mod ring_buffer;
 
 // Utility modules
-pub mod utils;
+pub mod math;
 
+pub mod dsp;
 pub mod effects;
-pub mod fft;
-
-// Existing modules (kept for compatibility)
-pub mod oscillator;
 
 // Re-export main API
 pub use config::VocalEffectsConfig;
@@ -32,10 +25,7 @@ pub use error::VocalEffectsError;
 pub use state::{MusicalSettings, ProcessingMode};
 
 // Re-export commonly used functions
-pub use frequencies::{find_nearest_note_frequency, find_nearest_note_in_key};
-pub use keys::{get_frequency, get_key, get_key_name, get_scale_by_key};
-pub use process_frequencies::{find_fundamental_frequency, wrap_phase};
-pub use process_vocal_effects::{
+pub use vocal_effects::{
     process_vocal_effects_512, process_vocal_effects_1024, process_vocal_effects_2048,
     process_vocal_effects_4096,
 };

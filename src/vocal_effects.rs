@@ -5,8 +5,8 @@
 
 use crate::{
     MusicalSettings, ProcessingMode, VocalEffectsConfig,
+    dsp::{Fft512, Fft1024, Fft2048, Fft4096, FftOps},
     effects::{process_dry_generic, process_pitch_correction_generic, process_vocode_generic},
-    fft::{Fft512, Fft1024, Fft2048, Fft4096, FftOps},
 };
 
 /// Generic vocal effects processing function that works with different FFT sizes and processing modes

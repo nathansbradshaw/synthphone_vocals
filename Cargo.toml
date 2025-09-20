@@ -1,5 +1,5 @@
 [package]
-name = "synthphone_vocals"
+name = "synthphone-e-vocal-dsp"
 version = "0.1.1"
 edition = "2024"
 description = "Real-time Vocal Effects and Pitch Correction library for embedded and desktop applications"

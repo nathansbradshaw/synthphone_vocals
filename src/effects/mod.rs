@@ -4,8 +4,7 @@ use libm::{atan2f, cosf, expf, fabsf, floorf, sinf, sqrtf};
 
 use crate::{
     MusicalSettings, VocalEffectsConfig,
-    fft::FftOps,
-    utils::{calculate_pitch_shift, extract_cepstral_envelope},
+    dsp::{self, FftOps, calculate_pitch_shift, extract_cepstral_envelope, frequency_analysis},
 };
 
 /// Generic pitch correction processing (pitch correction)
@@ -51,7 +50,7 @@ where
         let phase = atan2f(fft_result[i].im, fft_result[i].re);
         let mut phase_diff = phase - last_input_phases[i];
         let bin_centre_frequency = 2.0 * PI * i as f32 / N as f32;
-        phase_diff = crate::process_frequencies::wrap_phase(
+        phase_diff = dsp::frequency_analysis::wrap_phase(
             phase_diff - bin_centre_frequency * hop_size as f32,
         );
         let bin_deviation = phase_diff * N as f32 / hop_size as f32 / (2.0 * PI);
@@ -123,8 +122,7 @@ where
         let mut phase_increment = bin_deviation * 2.0 * PI * hop_size as f32 / N as f32;
         let bin_center_frequency = 2.0 * PI * i as f32 / N as f32;
         phase_increment += bin_center_frequency * hop_size as f32;
-        let output_phase =
-            crate::process_frequencies::wrap_phase(last_output_phases[i] + phase_increment);
+        let output_phase = frequency_analysis::wrap_phase(last_output_phases[i] + phase_increment);
         let real_part = magnitude * cosf(output_phase);
         let imaginary_part = magnitude * sinf(output_phase);
         full_spectrum[i] = microfft::Complex32 { re: real_part, im: imaginary_part };
@@ -283,9 +281,8 @@ where
 
             let mut phase_diff = phase - last_input_phases[i];
             let bin_centre_frequency = 2.0 * PI * i as f32 / N as f32;
-            phase_diff = crate::process_frequencies::wrap_phase(
-                phase_diff - bin_centre_frequency * hop_size as f32,
-            );
+            phase_diff =
+                frequency_analysis::wrap_phase(phase_diff - bin_centre_frequency * hop_size as f32);
             let bin_deviation = phase_diff * N as f32 / hop_size as f32 / (2.0 * PI);
 
             analysis_frequencies[i] = i as f32 + bin_deviation;
@@ -348,8 +345,7 @@ where
             let bin_centre_frequency = 2.0 * PI * i as f32 / N as f32;
             phase_diff += bin_centre_frequency * hop_size as f32;
 
-            let out_phase =
-                crate::process_frequencies::wrap_phase(last_output_phases[i] + phase_diff);
+            let out_phase = frequency_analysis::wrap_phase(last_output_phases[i] + phase_diff);
             last_output_phases[i] = out_phase;
 
             full_spectrum[i] = microfft::Complex32 {

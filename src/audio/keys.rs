@@ -1,4 +1,4 @@
-use crate::frequencies::*;
+use crate::audio::frequencies::*;
 
 /// A KeyScale is simply an array of 7 static string slices, e.g. ["C", "D", "E", "F", "G", "A", "B"].
 pub type KeyScaleFrequencies = [f32; 70];
